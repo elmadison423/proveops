@@ -15,9 +15,7 @@ export default function Home() {
       .from('Meters')
       .select('*')
 
-    if (error) {
-      console.error(error)
-    } else {
+    if (!error) {
       setMeters(data)
     }
   }
@@ -43,81 +41,41 @@ export default function Home() {
     return 'OK'
   }
 
-  const totalMeters = meters.length
-
   const dueMeters = meters.filter(
-    m => getStatus(m) === 'DUE'
-  ).length
+    meter =>
+      getStatus(meter) === 'DUE'
+  )
 
   const okMeters = meters.filter(
-    m => getStatus(m) === 'OK'
-  ).length
+    meter =>
+      getStatus(meter) === 'OK'
+  )
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="container">
       <h1>ProveOps Dashboard</h1>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '20px',
-          marginTop: '30px',
-        }}
-      >
-        <div
-          style={{
-            border: '1px solid black',
-            padding: '20px',
-            width: '200px',
-          }}
-        >
+      <div className="cards">
+        <div className="card">
           <h2>Total Meters</h2>
 
-          <p
-            style={{
-              fontSize: '32px',
-            }}
-          >
-            {totalMeters}
-          </p>
+          <h1>{meters.length}</h1>
         </div>
 
-        <div
-          style={{
-            border: '1px solid black',
-            padding: '20px',
-            width: '200px',
-          }}
-        >
+        <div className="card">
           <h2>Due Meters</h2>
 
-          <p
-            style={{
-              fontSize: '32px',
-              color: 'red',
-            }}
-          >
-            {dueMeters}
-          </p>
+          <h1 style={{ color: 'red' }}>
+            {dueMeters.length}
+          </h1>
         </div>
 
-        <div
-          style={{
-            border: '1px solid black',
-            padding: '20px',
-            width: '200px',
-          }}
-        >
+        <div className="card">
           <h2>OK Meters</h2>
 
-          <p
-            style={{
-              fontSize: '32px',
-              color: 'green',
-            }}
-          >
-            {okMeters}
-          </p>
+          <h1 style={{ color: 'green' }}>
+            {okMeters.length}
+          </h1>
         </div>
       </div>
     </div>
