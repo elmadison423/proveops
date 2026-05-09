@@ -146,6 +146,18 @@ export default function RootLayout({
   Technician Schedule
 
 </Link>
+<Link
+  href="/meter-map"
+  style={{
+    color: 'white',
+    marginRight: '20px',
+    textDecoration: 'none',
+  }}
+>
+
+  Meter Map
+
+</Link>
           <Link
             href="/login"
             style={{
