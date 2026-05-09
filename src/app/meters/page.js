@@ -5,6 +5,8 @@ import {
   useState,
 } from 'react'
 
+import Link from 'next/link'
+
 import jsPDF from 'jspdf'
 
 import { supabase }
@@ -57,7 +59,6 @@ export default function Meters() {
 
     const {
       data,
-      error,
     } = await supabase
       .from('Meters')
       .select('*')
@@ -66,10 +67,7 @@ export default function Meters() {
         profile.organization_id
       )
 
-    if (!error) {
-
-      setMeters(data || [])
-    }
+    setMeters(data || [])
   }
 
   function getStatus(meter) {
@@ -157,26 +155,22 @@ export default function Meters() {
         .toISOString()
         .split('T')[0]
 
-    const { error } =
-      await supabase
-        .from('Meters')
-        .update({
-          last_prove_date:
-            today,
-        })
-        .eq(
-          'id',
-          meter.id
-        )
-
-    if (!error) {
-
-      alert(
-        'Prove logged successfully'
+    await supabase
+      .from('Meters')
+      .update({
+        last_prove_date:
+          today,
+      })
+      .eq(
+        'id',
+        meter.id
       )
 
-      fetchMeters()
-    }
+    alert(
+      'Prove logged successfully'
+    )
+
+    fetchMeters()
   }
 
   async function deleteMeter(
@@ -192,16 +186,12 @@ export default function Meters() {
       return
     }
 
-    const { error } =
-      await supabase
-        .from('Meters')
-        .delete()
-        .eq('id', id)
+    await supabase
+      .from('Meters')
+      .delete()
+      .eq('id', id)
 
-    if (!error) {
-
-      fetchMeters()
-    }
+    fetchMeters()
   }
 
   return (
@@ -247,148 +237,166 @@ export default function Meters() {
 
         </select>
 
-        <table>
+        <div className="table-wrapper">
 
-          <thead>
+          <table>
 
-            <tr>
+            <thead>
 
-              <th>Name</th>
+              <tr>
 
-              <th>Location</th>
+                <th>Name</th>
 
-              <th>Status</th>
+                <th>Location</th>
 
-              <th>
-                Next Prove
-              </th>
+                <th>Status</th>
 
-              <th>
-                Actions
-              </th>
+                <th>
+                  Next Prove
+                </th>
 
-            </tr>
+                <th>
+                  Actions
+                </th>
 
-          </thead>
+              </tr>
 
-          <tbody>
+            </thead>
 
-            {
-              meters
-                .filter(m => {
+            <tbody>
 
-                  const matchesSearch =
-                    m.name
-                      .toLowerCase()
-                      .includes(
-                        search.toLowerCase()
-                      )
+              {
+                meters
+                  .filter(m => {
 
-                  const matchesStatus =
-                    statusFilter
-                    === 'ALL'
-                    ||
-                    getStatus(m)
-                    === statusFilter
+                    const matchesSearch =
+                      m.name
+                        .toLowerCase()
+                        .includes(
+                          search.toLowerCase()
+                        )
 
-                  return (
-                    matchesSearch
-                    &&
-                    matchesStatus
-                  )
-                })
-                .map(m => (
+                    const matchesStatus =
+                      statusFilter
+                      === 'ALL'
+                      ||
+                      getStatus(m)
+                      === statusFilter
 
-                  <tr
-                    key={m.id}
-                  >
+                    return (
+                      matchesSearch
+                      &&
+                      matchesStatus
+                    )
+                  })
+                  .map(m => (
 
-                    <td>
-                      {m.name}
-                    </td>
+                    <tr
+                      key={m.id}
+                    >
 
-                    <td>
-                      {m.location}
-                    </td>
+                      <td>
+                        {m.name}
+                      </td>
 
-                    <td>
+                      <td>
+                        {m.location}
+                      </td>
 
-                      <span
-                        style={{
-                          color:
+                      <td>
+
+                        <span
+                          style={{
+                            color:
+                              getStatus(m)
+                              === 'DUE'
+                                ? 'red'
+                                : 'green',
+
+                            fontWeight:
+                              'bold',
+                          }}
+                        >
+
+                          {
                             getStatus(m)
-                            === 'DUE'
-                              ? 'red'
-                              : 'green',
+                          }
 
-                          fontWeight:
-                            'bold',
-                        }}
-                      >
+                        </span>
+
+                      </td>
+
+                      <td>
 
                         {
-                          getStatus(m)
+                          getNextProveDate(m)
                         }
 
-                      </span>
+                      </td>
 
-                    </td>
+                      <td>
 
-                    <td>
+                        <Link
+                          href={`/edit-meter/${m.id}`}
+                        >
 
-                      {
-                        getNextProveDate(m)
-                      }
+                          <button
+                            type="button"
+                          >
 
-                    </td>
+                            Edit
 
-                    <td>
+                          </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          logProve(m)
-                        }
-                      >
+                        </Link>
 
-                        Log Prove
+                        <button
+                          type="button"
+                          onClick={() =>
+                            logProve(m)
+                          }
+                        >
 
-                      </button>
+                          Log Prove
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          generatePDF(m)
-                        }
-                      >
+                        </button>
 
-                        PDF Report
+                        <button
+                          type="button"
+                          onClick={() =>
+                            generatePDF(m)
+                          }
+                        >
 
-                      </button>
+                          PDF Report
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteMeter(
-                            m.id
-                          )
-                        }
-                      >
+                        </button>
 
-                        Delete
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteMeter(
+                              m.id
+                            )
+                          }
+                        >
 
-                      </button>
+                          Delete
 
-                    </td>
+                        </button>
 
-                  </tr>
+                      </td>
 
-                ))
-            }
+                    </tr>
 
-          </tbody>
+                  ))
+              }
 
-        </table>
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 

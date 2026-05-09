@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  useEffect,
   useState,
 } from 'react'
 
@@ -37,6 +38,58 @@ export default function AddMeter() {
     setTimeIntervalDays,
   ] = useState('30')
 
+  const [
+    technicians,
+    setTechnicians,
+  ] = useState([])
+
+  const [
+    technicianId,
+    setTechnicianId,
+  ] = useState('')
+
+  useEffect(() => {
+
+    fetchTechnicians()
+
+  }, [])
+
+  async function fetchTechnicians() {
+
+    const user =
+      (
+        await supabase.auth
+          .getUser()
+      ).data.user
+
+    if (!user) return
+
+    const {
+      data: profile,
+    } = await supabase
+      .from('Profiles')
+      .select('*')
+      .eq(
+        'user_id',
+        user.id
+      )
+      .single()
+
+    const {
+      data,
+    } = await supabase
+      .from('Technicians')
+      .select('*')
+      .eq(
+        'organization_id',
+        profile.organization_id
+      )
+
+    setTechnicians(
+      data || []
+    )
+  }
+
   async function addMeter() {
 
     const user =
@@ -58,15 +111,6 @@ export default function AddMeter() {
       )
       .single()
 
-    if (!profile) {
-
-      alert(
-        'No profile found'
-      )
-
-      return
-    }
-
     const { error } =
       await supabase
         .from('Meters')
@@ -74,14 +118,22 @@ export default function AddMeter() {
           {
             name,
             location,
+
             last_prove_date:
               lastProveDate,
+
             time_interval_days:
               Number(
                 timeIntervalDays
               ),
+
             organization_id:
               profile.organization_id,
+
+            technician_id:
+              Number(
+                technicianId
+              ),
           },
         ])
 
@@ -94,14 +146,6 @@ export default function AddMeter() {
       router.push(
         '/meters'
       )
-
-    } else {
-
-      alert(
-        'Error adding meter'
-      )
-
-      console.log(error)
     }
   }
 
@@ -187,6 +231,48 @@ export default function AddMeter() {
               )
             }
           />
+
+        </div>
+
+        <div>
+
+          <label>
+            Assigned Technician
+          </label>
+
+          <select
+            value={
+              technicianId
+            }
+            onChange={(e) =>
+              setTechnicianId(
+                e.target.value
+              )
+            }
+          >
+
+            <option value="">
+              Select Technician
+            </option>
+
+            {
+              technicians.map(
+                tech => (
+
+                  <option
+                    key={tech.id}
+                    value={tech.id}
+                  >
+
+                    {tech.name}
+
+                  </option>
+
+                )
+              )
+            }
+
+          </select>
 
         </div>
 

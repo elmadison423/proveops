@@ -1,12 +1,9 @@
 'use client'
 
-import {
-  useState,
-} from 'react'
+import { useState } from 'react'
 
-import {
-  useRouter,
-} from 'next/navigation'
+import { useRouter }
+from 'next/navigation'
 
 import { supabase }
 from '../../lib/supabase'
@@ -36,10 +33,18 @@ export default function AddTechnician() {
           .getUser()
       ).data.user
 
-    if (!user) return
+    if (!user) {
+
+      alert(
+        'No logged in user'
+      )
+
+      return
+    }
 
     const {
       data: profile,
+      error: profileError,
     } = await supabase
       .from('Profiles')
       .select('*')
@@ -48,6 +53,22 @@ export default function AddTechnician() {
         user.id
       )
       .single()
+
+    if (
+      profileError ||
+      !profile
+    ) {
+
+      alert(
+        'Profile not found'
+      )
+
+      console.log(
+        profileError
+      )
+
+      return
+    }
 
     const { error } =
       await supabase
@@ -62,10 +83,18 @@ export default function AddTechnician() {
           },
         ])
 
-    if (!error) {
+    if (error) {
+
+      console.log(error)
 
       alert(
-        'Technician added'
+        'Error saving technician'
+      )
+
+    } else {
+
+      alert(
+        'Technician added successfully'
       )
 
       router.push('/')
@@ -82,71 +111,67 @@ export default function AddTechnician() {
           Add Technician
         </h1>
 
-        <form>
+        <div>
 
-          <div>
+          <label>
+            Name
+          </label>
 
-            <label>
-              Name
-            </label>
-
-            <input
-              value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
-            />
-
-          </div>
-
-          <div>
-
-            <label>
-              Email
-            </label>
-
-            <input
-              value={email}
-              onChange={(e) =>
-                setEmail(
-                  e.target.value
-                )
-              }
-            />
-
-          </div>
-
-          <div>
-
-            <label>
-              Phone
-            </label>
-
-            <input
-              value={phone}
-              onChange={(e) =>
-                setPhone(
-                  e.target.value
-                )
-              }
-            />
-
-          </div>
-
-          <button
-            type="button"
-            onClick={
-              addTechnician
+          <input
+            value={name}
+            onChange={(e) =>
+              setName(
+                e.target.value
+              )
             }
-          >
+          />
 
-            Save Technician
+        </div>
 
-          </button>
+        <div>
 
-        </form>
+          <label>
+            Email
+          </label>
+
+          <input
+            value={email}
+            onChange={(e) =>
+              setEmail(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <div>
+
+          <label>
+            Phone
+          </label>
+
+          <input
+            value={phone}
+            onChange={(e) =>
+              setPhone(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <button
+          type="button"
+          onClick={
+            addTechnician
+          }
+        >
+
+          Save Technician
+
+        </button>
 
       </div>
 
