@@ -1,93 +1,107 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import {
+  useEffect,
+  useState,
+} from 'react'
+
+import { supabase }
+from '../../lib/supabase'
+
+import ProtectedRoute
+from '../../components/ProtectedRoute'
 
 export default function History() {
-  const [history, setHistory] = useState([])
+
+  const [history, setHistory] =
+    useState([])
 
   useEffect(() => {
+
     fetchHistory()
+
   }, [])
 
   async function fetchHistory() {
-    const { data, error } = await supabase
-      .from('ProveHistory')
-      .select('*')
-      .order('prove_date', {
-        ascending: false,
-      })
 
-    if (error) {
-      console.error(error)
-    } else {
+    const { data, error } =
+      await supabase
+        .from('ProveHistory')
+        .select('*')
+        .order('prove_date', {
+          ascending: false,
+        })
+
+    if (!error) {
+
       setHistory(data)
     }
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>ProveOps - Prove History</h1>
 
-      <table
-        style={{
-          borderCollapse: 'collapse',
-          width: '100%',
-          marginTop: '20px',
-        }}
-      >
-        <thead>
-          <tr>
-            <th style={{
-              border: '1px solid black',
-              padding: '10px',
-            }}>
-              Meter Name
-            </th>
+    <ProtectedRoute>
 
-            <th style={{
-              border: '1px solid black',
-              padding: '10px',
-            }}>
-              Location
-            </th>
+      <div className="container">
 
-            <th style={{
-              border: '1px solid black',
-              padding: '10px',
-            }}>
-              Prove Date
-            </th>
-          </tr>
-        </thead>
+        <h1>
+          Prove History
+        </h1>
 
-        <tbody>
-          {history.map(h => (
-            <tr key={h.id}>
-              <td style={{
-                border: '1px solid black',
-                padding: '10px',
-              }}>
-                {h.meter_name}
-              </td>
+        <div className="table-wrapper">
 
-              <td style={{
-                border: '1px solid black',
-                padding: '10px',
-              }}>
-                {h.location}
-              </td>
+          <table>
 
-              <td style={{
-                border: '1px solid black',
-                padding: '10px',
-              }}>
-                {h.prove_date}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+            <thead>
+
+              <tr>
+
+                <th>
+                  Meter Name
+                </th>
+
+                <th>
+                  Location
+                </th>
+
+                <th>
+                  Prove Date
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {history.map(item => (
+
+                <tr key={item.id}>
+
+                  <td>
+                    {item.meter_name}
+                  </td>
+
+                  <td>
+                    {item.location}
+                  </td>
+
+                  <td>
+                    {item.prove_date}
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    </ProtectedRoute>
   )
 }

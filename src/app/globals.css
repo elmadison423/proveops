@@ -1,38 +1,44 @@
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
-}
-
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f1f5f9;
+  color: #0f172a;
 }
 
-th,
-td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  text-align: left;
+nav {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 30px;
+  background-color: #0f172a;
 }
 
-button {
-  padding: 8px 12px;
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav button {
+  padding: 8px 14px;
+  border: none;
+  background-color: #2563eb;
+  color: white;
   cursor: pointer;
-}
-
-input,
-select {
-  padding: 10px;
+  border-radius: 6px;
 }
 
 .container {
-  padding: 20px;
+  padding: 30px;
+}
+
+h1 {
+  margin-bottom: 25px;
 }
 
 .cards {
@@ -42,75 +48,106 @@ select {
 }
 
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
+  background-color: white;
+  padding: 25px;
+  border-radius: 12px;
   min-width: 220px;
-  flex: 1;
+  box-shadow:
+    0 2px 8px rgba(
+      0,
+      0,
+      0,
+      0.08
+    );
 }
 
-.navbar {
-  background: #18233a;
-  padding: 15px;
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.navbar a {
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.filters {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-  margin-bottom: 20px;
+.card h2 {
+  margin-bottom: 10px;
+  font-size: 18px;
 }
 
 .table-wrapper {
   overflow-x: auto;
 }
 
-form {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 500px;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 2px 8px rgba(
+      0,
+      0,
+      0,
+      0.08
+    );
 }
 
-form div {
-  margin-bottom: 15px;
+th {
+  background-color: #e2e8f0;
+  text-align: left;
+  padding: 16px;
+}
+
+td {
+  padding: 16px;
+  border-top:
+    1px solid #e2e8f0;
+}
+
+button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+  margin-top: 4px;
+  background-color: #0f172a;
+  color: white;
+  transition: 0.2s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+.auth-button {
+  width: 100%;
+  margin-top: 10px;
+  background-color: #2563eb;
 }
 
 input,
 select {
-  width: 100%;
+  padding: 10px;
+  border:
+    1px solid #cbd5e1;
+  border-radius: 6px;
+  margin-bottom: 20px;
 }
 
-@media (max-width: 768px) {
-  .cards {
-    flex-direction: column;
-  }
+form {
+  background-color: white;
+  padding: 25px;
+  border-radius: 12px;
+  max-width: 500px;
+  box-shadow:
+    0 2px 8px rgba(
+      0,
+      0,
+      0,
+      0.08
+    );
+}
 
-  .navbar {
-    flex-direction: column;
-    gap: 10px;
-  }
+form div {
+  margin-bottom: 20px;
+}
 
-  h1 {
-    font-size: 28px;
-  }
-
-  table {
-    font-size: 14px;
-  }
-
-  button {
-    width: 100%;
-    margin-top: 5px;
-  }
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
 }

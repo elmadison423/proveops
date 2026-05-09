@@ -1,116 +1,206 @@
 'use client'
 
-import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
+import {
+  useState,
+} from 'react'
+
+import {
+  useRouter,
+} from 'next/navigation'
+
+import { supabase }
+from '../../lib/supabase'
+
+import ProtectedRoute
+from '../../components/ProtectedRoute'
 
 export default function AddMeter() {
-  const [name, setName] = useState('')
-  const [location, setLocation] =
+
+  const router =
+    useRouter()
+
+  const [name, setName] =
     useState('')
+
+  const [
+    location,
+    setLocation,
+  ] = useState('')
+
   const [
     lastProveDate,
     setLastProveDate,
   ] = useState('')
+
   const [
-    intervalDays,
-    setIntervalDays,
-  ] = useState('')
+    timeIntervalDays,
+    setTimeIntervalDays,
+  ] = useState('30')
 
-  async function addMeter(e) {
-    e.preventDefault()
+  async function addMeter() {
 
-    const { error } = await supabase
-      .from('Meters')
-      .insert([
-        {
-          name,
-          location,
-          last_prove_date:
-            lastProveDate,
-          time_interval_days:
-            Number(intervalDays),
-        },
-      ])
+    const user =
+      (
+        await supabase.auth
+          .getUser()
+      ).data.user
 
-    if (error) {
-      alert(error.message)
+    if (!user) return
+
+    const {
+      data: profile,
+    } = await supabase
+      .from('Profiles')
+      .select('*')
+      .eq(
+        'user_id',
+        user.id
+      )
+      .single()
+
+    if (!profile) {
+
+      alert(
+        'No profile found'
+      )
+
+      return
+    }
+
+    const { error } =
+      await supabase
+        .from('Meters')
+        .insert([
+          {
+            name,
+            location,
+            last_prove_date:
+              lastProveDate,
+            time_interval_days:
+              Number(
+                timeIntervalDays
+              ),
+            organization_id:
+              profile.organization_id,
+          },
+        ])
+
+    if (!error) {
+
+      alert(
+        'Meter added successfully'
+      )
+
+      router.push(
+        '/meters'
+      )
+
     } else {
-      alert('Meter added!')
 
-      setName('')
-      setLocation('')
-      setLastProveDate('')
-      setIntervalDays('')
+      alert(
+        'Error adding meter'
+      )
+
+      console.log(error)
     }
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Add Meter</h1>
 
-      <form onSubmit={addMeter}>
-        <div style={{ marginBottom: '15px' }}>
-          <label>Meter Name</label>
-          <br />
+    <ProtectedRoute>
+
+      <div className="container">
+
+        <h1>
+          Add Meter
+        </h1>
+
+        <div>
+
+          <label>
+            Meter Name
+          </label>
 
           <input
             value={name}
-            onChange={e =>
-              setName(e.target.value)
+            onChange={(e) =>
+              setName(
+                e.target.value
+              )
             }
           />
+
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label>Location</label>
-          <br />
+        <div>
+
+          <label>
+            Location
+          </label>
 
           <input
             value={location}
-            onChange={e =>
-              setLocation(e.target.value)
+            onChange={(e) =>
+              setLocation(
+                e.target.value
+              )
             }
           />
+
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
+        <div>
+
           <label>
             Last Prove Date
           </label>
-          <br />
 
           <input
             type="date"
-            value={lastProveDate}
-            onChange={e =>
+            value={
+              lastProveDate
+            }
+            onChange={(e) =>
               setLastProveDate(
                 e.target.value
               )
             }
           />
+
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
+        <div>
+
           <label>
-            Time Interval Days
+            Time Interval
+            (Days)
           </label>
-          <br />
 
           <input
             type="number"
-            value={intervalDays}
-            onChange={e =>
-              setIntervalDays(
+            value={
+              timeIntervalDays
+            }
+            onChange={(e) =>
+              setTimeIntervalDays(
                 e.target.value
               )
             }
           />
+
         </div>
 
-        <button type="submit">
-          Add Meter
+        <button
+          type="button"
+          onClick={addMeter}
+        >
+
+          Save Meter
+
         </button>
-      </form>
-    </div>
+
+      </div>
+
+    </ProtectedRoute>
   )
 }
