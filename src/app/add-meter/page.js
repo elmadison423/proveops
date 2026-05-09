@@ -34,6 +34,16 @@ export default function AddMeter() {
   ] = useState('')
 
   const [
+    latitude,
+    setLatitude,
+  ] = useState('')
+
+  const [
+    longitude,
+    setLongitude,
+  ] = useState('')
+
+  const [
     lastProveDate,
     setLastProveDate,
   ] = useState('')
@@ -151,6 +161,20 @@ export default function AddMeter() {
               serialNumber,
 
             location,
+
+            latitude:
+              latitude
+                ? Number(
+                    latitude
+                  )
+                : null,
+
+            longitude:
+              longitude
+                ? Number(
+                    longitude
+                  )
+                : null,
 
             last_prove_date:
               lastProveDate,
@@ -280,6 +304,48 @@ export default function AddMeter() {
               value={location}
               onChange={(e) =>
                 setLocation(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
+
+          <div>
+
+            <label>
+              Latitude
+            </label>
+
+            <input
+              type="number"
+              value={latitude}
+              onChange={(e) =>
+                setLatitude(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
+
+          <div>
+
+            <label>
+              Longitude
+            </label>
+
+            <input
+              type="number"
+              value={longitude}
+              onChange={(e) =>
+                setLongitude(
                   e.target.value
                 )
               }
