@@ -24,7 +24,13 @@ export default function LoginPage() {
     setPassword,
   ] = useState('')
 
-  async function signIn() {
+  async function signIn(
+    e
+  ) {
+
+    if (e) {
+      e.preventDefault()
+    }
 
     const { error } =
       await supabase.auth
@@ -126,6 +132,15 @@ export default function LoginPage() {
               e.target.value
             )
           }
+          onKeyUp={(e) => {
+
+            if (
+              e.key === 'Enter'
+            ) {
+
+              signIn()
+            }
+          }}
           style={{
             width: '100%',
             padding: '10px',
