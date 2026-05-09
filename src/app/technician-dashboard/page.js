@@ -77,23 +77,32 @@ export default function TechnicianDashboard() {
     )
   }
 
-  function getStatus(meter) {
-
-    const today =
-      new Date()
+  function getNextProveDate(
+    meter
+  ) {
 
     const lastProve =
       new Date(
         meter.last_prove_date
       )
 
-    const nextProve =
-      new Date(lastProve)
-
-    nextProve.setDate(
+    lastProve.setDate(
       lastProve.getDate() +
       meter.time_interval_days
     )
+
+    return lastProve
+  }
+
+  function getStatus(meter) {
+
+    const today =
+      new Date()
+
+    const nextProve =
+      getNextProveDate(
+        meter
+      )
 
     const timeDue =
       today >= nextProve
@@ -147,6 +156,32 @@ export default function TechnicianDashboard() {
     return 'OK'
   }
 
+  function isDueThisWeek(
+    meter
+  ) {
+
+    const today =
+      new Date()
+
+    const nextWeek =
+      new Date()
+
+    nextWeek.setDate(
+      today.getDate() + 7
+    )
+
+    const nextProve =
+      getNextProveDate(
+        meter
+      )
+
+    return (
+      nextProve >= today
+      &&
+      nextProve <= nextWeek
+    )
+  }
+
   return (
 
     <ProtectedRoute>
@@ -183,6 +218,16 @@ export default function TechnicianDashboard() {
                       === 'DUE'
                   )
 
+                const weekMeters =
+                  assignedMeters.filter(
+
+                    meter =>
+
+                      isDueThisWeek(
+                        meter
+                      )
+                  )
+
                 return (
 
                   <div
@@ -190,13 +235,15 @@ export default function TechnicianDashboard() {
                     className="card"
                     style={{
                       minWidth:
-                        '350px',
+                        '400px',
                     }}
                   >
 
                     <h2>
                       {tech.name}
                     </h2>
+
+                    <br />
 
                     <p>
 
@@ -212,7 +259,7 @@ export default function TechnicianDashboard() {
 
                     <p>
 
-                      Due Meters:
+                      Overdue:
 
                       {' '}
 
@@ -231,24 +278,45 @@ export default function TechnicianDashboard() {
 
                     </p>
 
+                    <p>
+
+                      Due This Week:
+
+                      {' '}
+
+                      <strong
+                        style={{
+                          color:
+                            'orange',
+                        }}
+                      >
+
+                        {
+                          weekMeters.length
+                        }
+
+                      </strong>
+
+                    </p>
+
                     <br />
 
                     <h3>
-                      Assigned Meter List
+                      Priority Work
                     </h3>
 
                     <br />
 
                     {
-                      assignedMeters
+                      weekMeters
                         .length === 0
                       ? (
                         <p>
-                          No assigned meters
+                          No upcoming work
                         </p>
                       )
                       : (
-                        assignedMeters.map(
+                        weekMeters.map(
                           meter => (
 
                             <div
@@ -273,36 +341,22 @@ export default function TechnicianDashboard() {
 
                               <br />
 
-                              {meter.location}
+                              {
+                                meter.location
+                              }
 
                               <br />
 
-                              Status:
+                              Due:
 
                               {' '}
 
-                              <span
-                                style={{
-                                  color:
-                                    getStatus(
-                                      meter
-                                    )
-                                    === 'DUE'
-                                      ? 'red'
-                                      : 'green',
-
-                                  fontWeight:
-                                    'bold',
-                                }}
-                              >
-
-                                {
-                                  getStatus(
-                                    meter
-                                  )
-                                }
-
-                              </span>
+                              {
+                                getNextProveDate(
+                                  meter
+                                )
+                                .toLocaleDateString()
+                              }
 
                             </div>
 
