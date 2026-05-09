@@ -2,12 +2,22 @@ import './globals.css'
 
 import Link from 'next/link'
 
+import {
+  LayoutDashboard,
+  Gauge,
+  History,
+  PlusCircle,
+  Building2,
+  Users,
+  ClipboardList,
+  CalendarDays,
+  Map,
+  LogOut,
+} from 'lucide-react'
+
 export const metadata = {
-
   title: 'ProveOps',
-
-  description:
-    'Meter proving software',
+  description: 'Meter proving software',
 }
 
 export default function RootLayout({
@@ -20,167 +30,50 @@ export default function RootLayout({
 
       <body>
 
-        <nav>
+        <div className="app-layout">
 
-          <Link
-            href="/"
-            style={{
-              color: 'white',
-              marginRight:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
+          <aside className="sidebar">
 
-            Dashboard
+            <Link href="/">
+              <LayoutDashboard size={20} />
+              <span>Dashboard</span>
+            </Link>
 
-          </Link>
+            <Link href="/meters">
+              <Gauge size={20} />
+              <span>Meters</span>
+            </Link>
 
-          <Link
-            href="/meters"
-            style={{
-              color: 'white',
-              marginRight:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
+            <Link href="/history">
+              <History size={20} />
+              <span>History</span>
+            </Link>
 
-            Meters
+            <Link href="/add-meter">
+              <PlusCircle size={20} />
+              <span>Add Meter</span>
+            </Link>
 
-          </Link>
+            <Link href="/add-company">
+              <Building2 size={20} />
+              <span>Add Company</span>
+            </Link>
 
-          <Link
-            href="/history"
-            style={{
-              color: 'white',
-              marginRight:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
+            <Link href="/add-technician">
+              <Users size={20} />
+              <span>Add Technician</span>
+            </Link>
 
-            History
+            <Link href="/technician-dashboard">
+              <ClipboardList size={20} />
+              <span>Technician Dashboard</span>
+            </Link>
 
-          </Link>
+            <Link href="/technician-schedule">
+              <CalendarDays size={20} />
+              <span>Technician Schedule</span>
+            </Link>
 
-          <Link
-            href="/add-meter"
-            style={{
-              color: 'white',
-              marginRight:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
-
-            Add Meter
-
-          </Link>
-
-          <Link
-            href="/add-company"
-            style={{
-              color: 'white',
-              marginRight:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
-
-            Add Company
-
-          </Link>
-
-          <Link
-            href="/add-technician"
-            style={{
-              color: 'white',
-              marginRight:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
-
-            Add Technician
-
-          </Link>
-<Link
-  href="/technician-dashboard"
-  style={{
-    color: 'white',
-    marginRight: '20px',
-    textDecoration: 'none',
-  }}
->
-
-  Technician Dashboard
-</Link>
-<Link
-  href="/dispatch-board"
-  style={{
-    color: 'white',
-    marginRight: '20px',
-    textDecoration: 'none',
-  }}
->
-
-  Dispatch Board
-
-</Link>
-<Link
-  href="/technician-schedule"
-  style={{
-    color: 'white',
-    marginRight: '20px',
-    textDecoration: 'none',
-  }}
->
-
-  Technician Schedule
-
-</Link>
-<Link
-  href="/meter-map"
-  style={{
-    color: 'white',
-    marginRight: '20px',
-    textDecoration: 'none',
-  }}
->
-
-  Meter Map
-
-</Link>
-          <Link
-            href="/login"
-            style={{
-              color: 'white',
-              marginLeft:
-                '20px',
-              textDecoration:
-                'none',
-            }}
-          >
-
-            Logout
-
-          </Link>
-
-        </nav>
-
-        <div>
-          {children}
-        </div>
-
-      </body>
-
-    </html>
-  )
+            <Link href="/dispatch-board">
+              <ClipboardList size={20} />
 }
