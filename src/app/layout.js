@@ -3,7 +3,9 @@ import './globals.css'
 import Link from 'next/link'
 
 export const metadata = {
+
   title: 'ProveOps',
+
   description:
     'Meter proving software',
 }
@@ -95,9 +97,20 @@ export default function RootLayout({
 
           </Link>
 
-          <button>
-            Logout
-          </button>
+          <Link
+            href="/add-technician"
+            style={{
+              color: 'white',
+              marginRight:
+                '20px',
+              textDecoration:
+                'none',
+            }}
+          >
+
+            Add Technician
+
+          </Link>
 
         </nav>
 
