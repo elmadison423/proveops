@@ -25,13 +25,28 @@ export default function MapComponent() {
   const [meters, setMeters] =
     useState([])
 
+  const [
+    technicians,
+    setTechnicians,
+  ] = useState([])
+
+  const [
+    technicianFilter,
+    setTechnicianFilter,
+  ] = useState('ALL')
+
+  const [
+    statusFilter,
+    setStatusFilter,
+  ] = useState('ALL')
+
   useEffect(() => {
 
-    fetchMeters()
+    fetchData()
 
   }, [])
 
-  async function fetchMeters() {
+  async function fetchData() {
 
     const user =
       (
@@ -53,7 +68,7 @@ export default function MapComponent() {
       .single()
 
     const {
-      data,
+      data: meterData,
     } = await supabase
       .from('Meters')
       .select('*')
@@ -62,7 +77,36 @@ export default function MapComponent() {
         profile.organization_id
       )
 
-    setMeters(data || [])
+    const {
+      data: techData,
+    } = await supabase
+      .from('Technicians')
+      .select('*')
+
+    setMeters(
+      meterData || []
+    )
+
+    setTechnicians(
+      techData || []
+    )
+  }
+
+  function getNextProveDate(
+    meter
+  ) {
+
+    const lastProve =
+      new Date(
+        meter.last_prove_date
+      )
+
+    lastProve.setDate(
+      lastProve.getDate() +
+      meter.time_interval_days
+    )
+
+    return lastProve
   }
 
   function getStatus(meter) {
@@ -70,23 +114,91 @@ export default function MapComponent() {
     const today =
       new Date()
 
-    const lastProve =
-      new Date(
-        meter.last_prove_date
+    const nextProve =
+      getNextProveDate(
+        meter
       )
 
-    const nextProve =
-      new Date(lastProve)
+    const timeDue =
+      today >= nextProve
 
-    nextProve.setDate(
-      lastProve.getDate() +
-      meter.time_interval_days
-    )
+    const volumeUsed =
 
-    return today >= nextProve
-      ? 'DUE'
-      : 'OK'
+      (meter.current_volume || 0)
+
+      -
+
+      (meter.last_prove_volume || 0)
+
+    const volumeDue =
+
+      volumeUsed >=
+      (meter.volume_interval || 0)
+
+    if (
+      meter.proving_method
+      === 'TIME'
+    ) {
+
+      return timeDue
+        ? 'DUE'
+        : 'OK'
+    }
+
+    if (
+      meter.proving_method
+      === 'VOLUME'
+    ) {
+
+      return volumeDue
+        ? 'DUE'
+        : 'OK'
+    }
+
+    if (
+      meter.proving_method
+      === 'WHICHEVER_COMES_FIRST'
+    ) {
+
+      return (
+        timeDue ||
+        volumeDue
+      )
+        ? 'DUE'
+        : 'OK'
+    }
+
+    return 'OK'
   }
+
+  const filteredMeters =
+    meters.filter(meter => {
+
+      const technicianMatch =
+
+        technicianFilter === 'ALL'
+
+        ||
+
+        String(
+          meter.technician_id
+        ) === technicianFilter
+
+      const statusMatch =
+
+        statusFilter === 'ALL'
+
+        ||
+
+        getStatus(meter)
+        === statusFilter
+
+      return (
+        technicianMatch
+        &&
+        statusMatch
+      )
+    })
 
   return (
 
@@ -99,6 +211,78 @@ export default function MapComponent() {
         }}
       >
 
+        <div
+          style={{
+            padding: '10px',
+            background: 'white',
+          }}
+        >
+
+          <select
+            value={
+              technicianFilter
+            }
+            onChange={(e) =>
+              setTechnicianFilter(
+                e.target.value
+              )
+            }
+          >
+
+            <option value="ALL">
+              All Technicians
+            </option>
+
+            {
+              technicians.map(
+                tech => (
+
+                  <option
+                    key={tech.id}
+                    value={tech.id}
+                  >
+
+                    {tech.name}
+
+                  </option>
+
+                )
+              )
+            }
+
+          </select>
+
+          <select
+            value={
+              statusFilter
+            }
+            onChange={(e) =>
+              setStatusFilter(
+                e.target.value
+              )
+            }
+            style={{
+              marginLeft:
+                '10px',
+            }}
+          >
+
+            <option value="ALL">
+              All Statuses
+            </option>
+
+            <option value="DUE">
+              Due
+            </option>
+
+            <option value="OK">
+              OK
+            </option>
+
+          </select>
+
+        </div>
+
         <MapContainer
           center={[
             32.3182,
@@ -106,7 +290,7 @@ export default function MapComponent() {
           ]}
           zoom={8}
           style={{
-            height: '100%',
+            height: '90%',
             width: '100%',
           }}
         >
@@ -117,7 +301,7 @@ export default function MapComponent() {
           />
 
           {
-            meters.map(
+            filteredMeters.map(
               meter => {
 
                 if (
