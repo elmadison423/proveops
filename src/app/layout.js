@@ -112,6 +112,21 @@ export default function RootLayout({
 
           </Link>
 
+          <Link
+            href="/login"
+            style={{
+              color: 'white',
+              marginLeft:
+                '20px',
+              textDecoration:
+                'none',
+            }}
+          >
+
+            Logout
+
+          </Link>
+
         </nav>
 
         <div>
