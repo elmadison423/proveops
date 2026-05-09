@@ -88,11 +88,53 @@ export default function Meters() {
       meter.time_interval_days
     )
 
-    if (
+    const timeDue =
       today >= nextProve
+
+    const volumeUsed =
+
+      (meter.current_volume || 0)
+
+      -
+
+      (meter.last_prove_volume || 0)
+
+    const volumeDue =
+
+      volumeUsed >=
+      (meter.volume_interval || 0)
+
+    if (
+      meter.proving_method
+      === 'TIME'
     ) {
 
-      return 'DUE'
+      return timeDue
+        ? 'DUE'
+        : 'OK'
+    }
+
+    if (
+      meter.proving_method
+      === 'VOLUME'
+    ) {
+
+      return volumeDue
+        ? 'DUE'
+        : 'OK'
+    }
+
+    if (
+      meter.proving_method
+      === 'WHICHEVER_COMES_FIRST'
+    ) {
+
+      return (
+        timeDue ||
+        volumeDue
+      )
+        ? 'DUE'
+        : 'OK'
     }
 
     return 'OK'
@@ -158,8 +200,12 @@ export default function Meters() {
     await supabase
       .from('Meters')
       .update({
+
         last_prove_date:
           today,
+
+        last_prove_volume:
+          meter.current_volume,
       })
       .eq(
         'id',
@@ -252,6 +298,10 @@ export default function Meters() {
                 <th>Status</th>
 
                 <th>
+                  Volume Used
+                </th>
+
+                <th>
                   Next Prove
                 </th>
 
@@ -323,6 +373,20 @@ export default function Meters() {
                           }
 
                         </span>
+
+                      </td>
+
+                      <td>
+
+                        {
+
+                          (m.current_volume || 0)
+
+                          -
+
+                          (m.last_prove_volume || 0)
+
+                        }
 
                       </td>
 

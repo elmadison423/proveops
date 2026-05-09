@@ -24,6 +24,11 @@ export default function AddMeter() {
     useState('')
 
   const [
+    serialNumber,
+    setSerialNumber,
+  ] = useState('')
+
+  const [
     location,
     setLocation,
   ] = useState('')
@@ -37,6 +42,28 @@ export default function AddMeter() {
     timeIntervalDays,
     setTimeIntervalDays,
   ] = useState('30')
+
+  const [
+    provingMethod,
+    setProvingMethod,
+  ] = useState(
+    'TIME'
+  )
+
+  const [
+    volumeInterval,
+    setVolumeInterval,
+  ] = useState('')
+
+  const [
+    currentVolume,
+    setCurrentVolume,
+  ] = useState('')
+
+  const [
+    lastProveVolume,
+    setLastProveVolume,
+  ] = useState('')
 
   const [
     technicians,
@@ -117,6 +144,10 @@ export default function AddMeter() {
         .insert([
           {
             name,
+
+            serial_number:
+              serialNumber,
+
             location,
 
             last_prove_date:
@@ -125,6 +156,24 @@ export default function AddMeter() {
             time_interval_days:
               Number(
                 timeIntervalDays
+              ),
+
+            proving_method:
+              provingMethod,
+
+            volume_interval:
+              Number(
+                volumeInterval
+              ),
+
+            current_volume:
+              Number(
+                currentVolume
+              ),
+
+            last_prove_volume:
+              Number(
+                lastProveVolume
               ),
 
             organization_id:
@@ -179,6 +228,25 @@ export default function AddMeter() {
         <div>
 
           <label>
+            Serial Number
+          </label>
+
+          <input
+            value={
+              serialNumber
+            }
+            onChange={(e) =>
+              setSerialNumber(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <div>
+
+          <label>
             Location
           </label>
 
@@ -216,6 +284,43 @@ export default function AddMeter() {
         <div>
 
           <label>
+            Proving Method
+          </label>
+
+          <select
+            value={
+              provingMethod
+            }
+            onChange={(e) =>
+              setProvingMethod(
+                e.target.value
+              )
+            }
+          >
+
+            <option value="TIME">
+              Time
+            </option>
+
+            <option value="VOLUME">
+              Volume
+            </option>
+
+            <option
+              value="WHICHEVER_COMES_FIRST"
+            >
+
+              Whichever Comes First
+
+            </option>
+
+          </select>
+
+        </div>
+
+        <div>
+
+          <label>
             Time Interval
             (Days)
           </label>
@@ -227,6 +332,66 @@ export default function AddMeter() {
             }
             onChange={(e) =>
               setTimeIntervalDays(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <div>
+
+          <label>
+            Volume Interval
+          </label>
+
+          <input
+            type="number"
+            value={
+              volumeInterval
+            }
+            onChange={(e) =>
+              setVolumeInterval(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <div>
+
+          <label>
+            Current Volume
+          </label>
+
+          <input
+            type="number"
+            value={
+              currentVolume
+            }
+            onChange={(e) =>
+              setCurrentVolume(
+                e.target.value
+              )
+            }
+          />
+
+        </div>
+
+        <div>
+
+          <label>
+            Last Prove Volume
+          </label>
+
+          <input
+            type="number"
+            value={
+              lastProveVolume
+            }
+            onChange={(e) =>
+              setLastProveVolume(
                 e.target.value
               )
             }
