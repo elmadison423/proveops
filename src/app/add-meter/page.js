@@ -108,25 +108,6 @@ export default function AddMeter() {
 
   async function fetchTechnicians() {
 
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
-
-    if (!user) return
-
-    const {
-      data: profile,
-    } = await supabase
-      .from('Profiles')
-      .select('*')
-      .eq(
-        'user_id',
-        user.id
-      )
-      .single()
-
     const {
       data,
     } = await supabase
@@ -183,31 +164,47 @@ export default function AddMeter() {
               provingMethod,
 
             volume_interval:
-              Number(
-                volumeInterval
-              ),
+              volumeInterval
+                ? Number(
+                    volumeInterval
+                  )
+                : null,
 
             current_volume:
-              Number(
-                currentVolume
-              ),
+              currentVolume
+                ? Number(
+                    currentVolume
+                  )
+                : 0,
 
             last_prove_volume:
-              Number(
-                lastProveVolume
-              ),
+              lastProveVolume
+                ? Number(
+                    lastProveVolume
+                  )
+                : 0,
 
             organization_id:
               profile.organization_id,
 
             technician_id:
-              Number(
-                technicianId
-              ),
+              technicianId
+                ? Number(
+                    technicianId
+                  )
+                : null,
           },
         ])
 
-    if (!error) {
+    if (error) {
+
+      console.log(error)
+
+      alert(
+        'Error saving meter'
+      )
+
+    } else {
 
       alert(
         'Meter added successfully'
@@ -330,9 +327,6 @@ export default function AddMeter() {
                 setProvingMethod(
                   e.target.value
                 )
-              }
-              onKeyDown={
-                handleEnterKey
               }
             >
 
@@ -463,9 +457,6 @@ export default function AddMeter() {
                 setTechnicianId(
                   e.target.value
                 )
-              }
-              onKeyDown={
-                handleEnterKey
               }
             >
 

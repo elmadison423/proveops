@@ -111,7 +111,17 @@ export default function RootLayout({
             Add Technician
 
           </Link>
+<Link
+  href="/technician-dashboard"
+  style={{
+    color: 'white',
+    marginRight: '20px',
+    textDecoration: 'none',
+  }}
+>
 
+  Technician Dashboard
+</Link>
           <Link
             href="/login"
             style={{
