@@ -122,6 +122,18 @@ export default function RootLayout({
 
   Technician Dashboard
 </Link>
+<Link
+  href="/dispatch-board"
+  style={{
+    color: 'white',
+    marginRight: '20px',
+    textDecoration: 'none',
+  }}
+>
+
+  Dispatch Board
+
+</Link>
           <Link
             href="/login"
             style={{
