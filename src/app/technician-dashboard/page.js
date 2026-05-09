@@ -94,69 +94,7 @@ export default function TechnicianDashboard() {
     return lastProve
   }
 
-  function getStatus(meter) {
-
-    const today =
-      new Date()
-
-    const nextProve =
-      getNextProveDate(
-        meter
-      )
-
-    const timeDue =
-      today >= nextProve
-
-    const volumeUsed =
-
-      (meter.current_volume || 0)
-
-      -
-
-      (meter.last_prove_volume || 0)
-
-    const volumeDue =
-
-      volumeUsed >=
-      (meter.volume_interval || 0)
-
-    if (
-      meter.proving_method
-      === 'TIME'
-    ) {
-
-      return timeDue
-        ? 'DUE'
-        : 'OK'
-    }
-
-    if (
-      meter.proving_method
-      === 'VOLUME'
-    ) {
-
-      return volumeDue
-        ? 'DUE'
-        : 'OK'
-    }
-
-    if (
-      meter.proving_method
-      === 'WHICHEVER_COMES_FIRST'
-    ) {
-
-      return (
-        timeDue ||
-        volumeDue
-      )
-        ? 'DUE'
-        : 'OK'
-    }
-
-    return 'OK'
-  }
-
-  function isDueThisWeek(
+  function getPriority(
     meter
   ) {
 
@@ -175,11 +113,35 @@ export default function TechnicianDashboard() {
         meter
       )
 
-    return (
-      nextProve >= today
-      &&
+    const volumeUsed =
+
+      (meter.current_volume || 0)
+
+      -
+
+      (meter.last_prove_volume || 0)
+
+    const volumeDue =
+
+      volumeUsed >=
+      (meter.volume_interval || 0)
+
+    if (
+      nextProve < today ||
+      volumeDue
+    ) {
+
+      return 'OVERDUE'
+    }
+
+    if (
       nextProve <= nextWeek
-    )
+    ) {
+
+      return 'DUE_THIS_WEEK'
+    }
+
+    return 'UPCOMING'
   }
 
   return (
@@ -207,25 +169,26 @@ export default function TechnicianDashboard() {
                       === tech.id
                   )
 
-                const dueMeters =
+                const overdue =
                   assignedMeters.filter(
 
                     meter =>
 
-                      getStatus(
+                      getPriority(
                         meter
                       )
-                      === 'DUE'
+                      === 'OVERDUE'
                   )
 
-                const weekMeters =
+                const dueThisWeek =
                   assignedMeters.filter(
 
                     meter =>
 
-                      isDueThisWeek(
+                      getPriority(
                         meter
                       )
+                      === 'DUE_THIS_WEEK'
                   )
 
                 return (
@@ -235,7 +198,7 @@ export default function TechnicianDashboard() {
                     className="card"
                     style={{
                       minWidth:
-                        '400px',
+                        '420px',
                     }}
                   >
 
@@ -247,7 +210,7 @@ export default function TechnicianDashboard() {
 
                     <p>
 
-                      Assigned Meters:
+                      Assigned:
 
                       {' '}
 
@@ -271,7 +234,7 @@ export default function TechnicianDashboard() {
                       >
 
                         {
-                          dueMeters.length
+                          overdue.length
                         }
 
                       </strong>
@@ -292,7 +255,7 @@ export default function TechnicianDashboard() {
                       >
 
                         {
-                          weekMeters.length
+                          dueThisWeek.length
                         }
 
                       </strong>
@@ -308,59 +271,90 @@ export default function TechnicianDashboard() {
                     <br />
 
                     {
-                      weekMeters
+                      assignedMeters
                         .length === 0
                       ? (
                         <p>
-                          No upcoming work
+                          No assigned work
                         </p>
                       )
                       : (
-                        weekMeters.map(
-                          meter => (
+                        assignedMeters.map(
+                          meter => {
 
-                            <div
-                              key={
-                                meter.id
-                              }
-                              style={{
-                                marginBottom:
-                                  '10px',
-                                padding:
-                                  '10px',
-                                border:
-                                  '1px solid #ddd',
-                                borderRadius:
-                                  '6px',
-                              }}
-                            >
+                            const priority =
+                              getPriority(
+                                meter
+                              )
 
-                              <strong>
-                                {meter.name}
-                              </strong>
+                            return (
 
-                              <br />
+                              <div
+                                key={
+                                  meter.id
+                                }
+                                style={{
+                                  marginBottom:
+                                    '12px',
 
-                              {
-                                meter.location
-                              }
+                                  padding:
+                                    '12px',
 
-                              <br />
+                                  border:
+                                    '1px solid #ddd',
 
-                              Due:
+                                  borderRadius:
+                                    '8px',
 
-                              {' '}
+                                  background:
+                                    priority
+                                    === 'OVERDUE'
+                                      ? '#ffe5e5'
+                                      : priority
+                                      === 'DUE_THIS_WEEK'
+                                        ? '#fff4e5'
+                                        : '#f4f4f4',
+                                }}
+                              >
 
-                              {
-                                getNextProveDate(
-                                  meter
-                                )
-                                .toLocaleDateString()
-                              }
+                                <strong>
+                                  {meter.name}
+                                </strong>
 
-                            </div>
+                                <br />
 
-                          )
+                                {
+                                  meter.location
+                                }
+
+                                <br />
+
+                                Priority:
+
+                                {' '}
+
+                                <strong>
+
+                                  {priority}
+
+                                </strong>
+
+                                <br />
+
+                                Due:
+
+                                {' '}
+
+                                {
+                                  getNextProveDate(
+                                    meter
+                                  )
+                                  .toLocaleDateString()
+                                }
+
+                              </div>
+                            )
+                          }
                         )
                       )
                     }
