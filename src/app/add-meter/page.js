@@ -81,6 +81,31 @@ export default function AddMeter() {
 
   }, [])
 
+  function handleEnterKey(
+    e
+  ) {
+
+    if (
+      e.key === 'Enter'
+    ) {
+
+      e.preventDefault()
+
+      const form =
+        e.target.form
+
+      const index =
+        Array.prototype.indexOf.call(
+          form,
+          e.target
+        )
+
+      form.elements[
+        index + 1
+      ]?.focus()
+    }
+  }
+
   async function fetchTechnicians() {
 
     const user =
@@ -107,10 +132,6 @@ export default function AddMeter() {
     } = await supabase
       .from('Technicians')
       .select('*')
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
 
     setTechnicians(
       data || []
@@ -208,247 +229,281 @@ export default function AddMeter() {
           Add Meter
         </h1>
 
-        <div>
+        <form>
 
-          <label>
-            Meter Name
-          </label>
+          <div>
 
-          <input
-            value={name}
-            onChange={(e) =>
-              setName(
-                e.target.value
-              )
-            }
-          />
+            <label>
+              Meter Name
+            </label>
 
-        </div>
+            <input
+              value={name}
+              onChange={(e) =>
+                setName(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-        <div>
+          </div>
 
-          <label>
-            Serial Number
-          </label>
+          <div>
 
-          <input
-            value={
-              serialNumber
-            }
-            onChange={(e) =>
-              setSerialNumber(
-                e.target.value
-              )
-            }
-          />
+            <label>
+              Serial Number
+            </label>
 
-        </div>
+            <input
+              value={
+                serialNumber
+              }
+              onChange={(e) =>
+                setSerialNumber(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-        <div>
+          </div>
 
-          <label>
-            Location
-          </label>
+          <div>
 
-          <input
-            value={location}
-            onChange={(e) =>
-              setLocation(
-                e.target.value
-              )
-            }
-          />
+            <label>
+              Location
+            </label>
 
-        </div>
+            <input
+              value={location}
+              onChange={(e) =>
+                setLocation(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-        <div>
+          </div>
 
-          <label>
-            Last Prove Date
-          </label>
+          <div>
 
-          <input
-            type="date"
-            value={
-              lastProveDate
-            }
-            onChange={(e) =>
-              setLastProveDate(
-                e.target.value
-              )
-            }
-          />
+            <label>
+              Last Prove Date
+            </label>
 
-        </div>
+            <input
+              type="date"
+              value={
+                lastProveDate
+              }
+              onChange={(e) =>
+                setLastProveDate(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-        <div>
+          </div>
 
-          <label>
-            Proving Method
-          </label>
+          <div>
 
-          <select
-            value={
-              provingMethod
-            }
-            onChange={(e) =>
-              setProvingMethod(
-                e.target.value
-              )
-            }
-          >
+            <label>
+              Proving Method
+            </label>
 
-            <option value="TIME">
-              Time
-            </option>
-
-            <option value="VOLUME">
-              Volume
-            </option>
-
-            <option
-              value="WHICHEVER_COMES_FIRST"
+            <select
+              value={
+                provingMethod
+              }
+              onChange={(e) =>
+                setProvingMethod(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
             >
 
-              Whichever Comes First
+              <option value="TIME">
+                Time
+              </option>
 
-            </option>
+              <option value="VOLUME">
+                Volume
+              </option>
 
-          </select>
+              <option
+                value="WHICHEVER_COMES_FIRST"
+              >
 
-        </div>
+                Whichever Comes First
 
-        <div>
+              </option>
 
-          <label>
-            Time Interval
-            (Days)
-          </label>
+            </select>
 
-          <input
-            type="number"
-            value={
-              timeIntervalDays
-            }
-            onChange={(e) =>
-              setTimeIntervalDays(
-                e.target.value
-              )
-            }
-          />
+          </div>
 
-        </div>
+          <div>
 
-        <div>
+            <label>
+              Time Interval
+              (Days)
+            </label>
 
-          <label>
-            Volume Interval
-          </label>
+            <input
+              type="number"
+              value={
+                timeIntervalDays
+              }
+              onChange={(e) =>
+                setTimeIntervalDays(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-          <input
-            type="number"
-            value={
-              volumeInterval
-            }
-            onChange={(e) =>
-              setVolumeInterval(
-                e.target.value
-              )
-            }
-          />
+          </div>
 
-        </div>
+          <div>
 
-        <div>
+            <label>
+              Volume Interval
+            </label>
 
-          <label>
-            Current Volume
-          </label>
+            <input
+              type="number"
+              value={
+                volumeInterval
+              }
+              onChange={(e) =>
+                setVolumeInterval(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-          <input
-            type="number"
-            value={
-              currentVolume
-            }
-            onChange={(e) =>
-              setCurrentVolume(
-                e.target.value
-              )
-            }
-          />
+          </div>
 
-        </div>
+          <div>
 
-        <div>
+            <label>
+              Current Volume
+            </label>
 
-          <label>
-            Last Prove Volume
-          </label>
+            <input
+              type="number"
+              value={
+                currentVolume
+              }
+              onChange={(e) =>
+                setCurrentVolume(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-          <input
-            type="number"
-            value={
-              lastProveVolume
-            }
-            onChange={(e) =>
-              setLastProveVolume(
-                e.target.value
-              )
-            }
-          />
+          </div>
 
-        </div>
+          <div>
 
-        <div>
+            <label>
+              Last Prove Volume
+            </label>
 
-          <label>
-            Assigned Technician
-          </label>
+            <input
+              type="number"
+              value={
+                lastProveVolume
+              }
+              onChange={(e) =>
+                setLastProveVolume(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
-          <select
-            value={
-              technicianId
-            }
-            onChange={(e) =>
-              setTechnicianId(
-                e.target.value
-              )
-            }
+          </div>
+
+          <div>
+
+            <label>
+              Assigned Technician
+            </label>
+
+            <select
+              value={
+                technicianId
+              }
+              onChange={(e) =>
+                setTechnicianId(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            >
+
+              <option value="">
+                Select Technician
+              </option>
+
+              {
+                technicians.map(
+                  tech => (
+
+                    <option
+                      key={tech.id}
+                      value={tech.id}
+                    >
+
+                      {tech.name}
+
+                    </option>
+
+                  )
+                )
+              }
+
+            </select>
+
+          </div>
+
+          <button
+            type="button"
+            onClick={addMeter}
           >
 
-            <option value="">
-              Select Technician
-            </option>
+            Save Meter
 
-            {
-              technicians.map(
-                tech => (
+          </button>
 
-                  <option
-                    key={tech.id}
-                    value={tech.id}
-                  >
-
-                    {tech.name}
-
-                  </option>
-
-                )
-              )
-            }
-
-          </select>
-
-        </div>
-
-        <button
-          type="button"
-          onClick={addMeter}
-        >
-
-          Save Meter
-
-        </button>
+        </form>
 
       </div>
 
