@@ -345,7 +345,22 @@ export default function MapComponent() {
                           meter
                         )
                       }
+<br />
+<br />
 
+<a
+  href={
+
+    `https://www.google.com/maps/dir/?api=1&destination=${meter.latitude},${meter.longitude}`
+
+  }
+  target="_blank"
+  rel="noreferrer"
+>
+
+  Navigate
+
+</a>
                     </Popup>
 
                   </Marker>
