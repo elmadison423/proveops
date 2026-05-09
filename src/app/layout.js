@@ -134,6 +134,18 @@ export default function RootLayout({
   Dispatch Board
 
 </Link>
+<Link
+  href="/technician-schedule"
+  style={{
+    color: 'white',
+    marginRight: '20px',
+    textDecoration: 'none',
+  }}
+>
+
+  Technician Schedule
+
+</Link>
           <Link
             href="/login"
             style={{
