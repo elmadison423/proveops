@@ -16,8 +16,11 @@ import {
 } from 'lucide-react'
 
 export const metadata = {
+
   title: 'ProveOps',
-  description: 'Meter proving software',
+
+  description:
+    'Meter proving software',
 }
 
 export default function RootLayout({
@@ -76,4 +79,31 @@ export default function RootLayout({
 
             <Link href="/dispatch-board">
               <ClipboardList size={20} />
+              <span>Dispatch Board</span>
+            </Link>
+
+            <Link href="/meter-map">
+              <Map size={20} />
+              <span>Meter Map</span>
+            </Link>
+
+            <Link href="/login">
+              <LogOut size={20} />
+              <span>Logout</span>
+            </Link>
+
+          </aside>
+
+          <main className="main-content">
+
+            {children}
+
+          </main>
+
+        </div>
+
+      </body>
+
+    </html>
+  )
 }
