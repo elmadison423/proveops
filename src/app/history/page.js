@@ -5,6 +5,8 @@ import {
   useState,
 } from 'react'
 
+import Link from 'next/link'
+
 import { supabase }
 from '../../lib/supabase'
 
@@ -16,6 +18,9 @@ export default function History() {
   const [history, setHistory] =
     useState([])
 
+  const [search, setSearch] =
+    useState('')
+
   useEffect(() => {
 
     fetchHistory()
@@ -24,18 +29,58 @@ export default function History() {
 
   async function fetchHistory() {
 
-    const { data, error } =
-      await supabase
-        .from('ProveHistory')
-        .select('*')
-        .order('prove_date', {
+    const {
+      data: proveHistory,
+    } = await supabase
+      .from('ProveHistory')
+      .select('*')
+      .order(
+        'prove_date',
+        {
           ascending: false,
-        })
+        }
+      )
 
-    if (!error) {
+    const {
+      data: meters,
+    } = await supabase
+      .from('Meters')
+      .select('*')
 
-      setHistory(data)
-    }
+    const combined =
+
+      (proveHistory || []).map(
+        prove => {
+
+          const meter =
+            meters?.find(
+
+              m =>
+
+                String(m.id)
+                ===
+                String(
+                  prove.meter_id
+                )
+            )
+
+          return {
+
+            ...prove,
+
+            meter_name:
+              meter?.name || '',
+
+            meter_id_tag:
+              meter?.meter_id_tag || '',
+
+            location:
+              meter?.location || '',
+          }
+        }
+      )
+
+    setHistory(combined)
   }
 
   return (
@@ -48,6 +93,16 @@ export default function History() {
           Prove History
         </h1>
 
+        <input
+          placeholder="Search prove history..."
+          value={search}
+          onChange={(e) =>
+            setSearch(
+              e.target.value
+            )
+          }
+        />
+
         <div className="table-wrapper">
 
           <table>
@@ -55,6 +110,10 @@ export default function History() {
             <thead>
 
               <tr>
+
+                <th>
+                  Meter ID
+                </th>
 
                 <th>
                   Meter Name
@@ -68,31 +127,102 @@ export default function History() {
                   Prove Date
                 </th>
 
+                <th>
+                  Status
+                </th>
+
               </tr>
 
             </thead>
 
             <tbody>
 
-              {history.map(item => (
+              {
+                history
 
-                <tr key={item.id}>
+                  .filter(item =>
 
-                  <td>
-                    {item.meter_name}
-                  </td>
+                    item.meter_name
+                      ?.toLowerCase()
+                      .includes(
+                        search.toLowerCase()
+                      )
 
-                  <td>
-                    {item.location}
-                  </td>
+                    ||
 
-                  <td>
-                    {item.prove_date}
-                  </td>
+                    item.location
+                      ?.toLowerCase()
+                      .includes(
+                        search.toLowerCase()
+                      )
 
-                </tr>
+                    ||
 
-              ))}
+                    item.meter_id_tag
+                      ?.toLowerCase()
+                      .includes(
+                        search.toLowerCase()
+                      )
+                  )
+
+                  .map(
+                    item => (
+
+                      <tr
+                        key={item.id}
+                      >
+
+                        <td>
+
+                          {
+                            item.meter_id_tag
+                          }
+
+                        </td>
+
+                        <td>
+
+                          <Link
+                            href={`/meter-detail?meter=${item.meter_id}`}
+                          >
+
+                            {
+                              item.meter_name
+                            }
+
+                          </Link>
+
+                        </td>
+
+                        <td>
+
+                          {
+                            item.location
+                          }
+
+                        </td>
+
+                        <td>
+
+                          {
+                            item.prove_date
+                          }
+
+                        </td>
+
+                        <td>
+
+                          {
+                            item.status
+                          }
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )
+              }
 
             </tbody>
 

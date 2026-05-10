@@ -290,7 +290,9 @@ export default function Meters() {
             <thead>
 
               <tr>
-
+<th>
+  Meter ID
+</th>
                 <th>Name</th>
 
                 <th>Location</th>
@@ -344,10 +346,24 @@ export default function Meters() {
                     <tr
                       key={m.id}
                     >
+<td>
 
+  {
+    m.meter_id_tag
+  }
+
+</td>
                       <td>
-                        {m.name}
-                      </td>
+
+  <Link
+    href={`/meter-detail?meter=${m.id}`}
+  >
+
+    {m.name}
+
+  </Link>
+
+</td>
 
                       <td>
                         {m.location}
@@ -414,16 +430,19 @@ export default function Meters() {
 
                         </Link>
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            logProve(m)
-                          }
-                        >
+                        <Link
+  href={`/log-prove?meter=${m.id}`}
+>
 
-                          Log Prove
+  <button
+    type="button"
+  >
 
-                        </button>
+    Log Prove
+
+  </button>
+
+</Link>
 
                         <button
                           type="button"

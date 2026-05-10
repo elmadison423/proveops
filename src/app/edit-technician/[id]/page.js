@@ -1,23 +1,31 @@
 'use client'
 
 import {
+  useEffect,
   useState,
 } from 'react'
 
 import {
+  useParams,
   useRouter,
 } from 'next/navigation'
 
 import { supabase }
-from '../../lib/supabase'
+from '../../../lib/supabase'
 
 import ProtectedRoute
-from '../../components/ProtectedRoute'
+from '../../../components/ProtectedRoute'
 
-export default function AddTechnician() {
+export default function EditTechnician() {
+
+  const params =
+    useParams()
 
   const router =
     useRouter()
+
+  const technicianId =
+    params.id
 
   const [name, setName] =
     useState('')
@@ -30,6 +38,12 @@ export default function AddTechnician() {
 
   const [role, setRole] =
     useState('')
+
+  useEffect(() => {
+
+    fetchTechnician()
+
+  }, [])
 
   function handleEnterKey(
     e
@@ -56,81 +70,68 @@ export default function AddTechnician() {
     }
   }
 
-  async function addTechnician() {
-
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
-
-    if (!user) {
-
-      alert(
-        'No logged in user'
-      )
-
-      return
-    }
+  async function fetchTechnician() {
 
     const {
-      data: profile,
-      error: profileError,
+      data,
     } = await supabase
-      .from('Profiles')
+      .from('Technicians')
       .select('*')
       .eq(
-        'user_id',
-        user.id
+        'id',
+        technicianId
       )
       .single()
 
-    if (
-      profileError ||
-      !profile
-    ) {
+    if (!data) return
 
-      alert(
-        'Profile not found'
-      )
+    setName(data.name || '')
 
-      console.log(
-        profileError
-      )
+    setEmail(data.email || '')
 
-      return
-    }
+    setPhone(data.phone || '')
+
+    setRole(data.role || '')
+  }
+
+  async function updateTechnician() {
 
     const { error } =
       await supabase
         .from('Technicians')
-        .insert([
-          {
-            name,
-            email,
-            phone,
-            role,
+        .update({
 
-            organization_id:
-              profile.organization_id,
-          },
-        ])
+          name,
+
+          email,
+
+          phone,
+
+          role,
+        })
+
+        .eq(
+          'id',
+          technicianId
+        )
 
     if (error) {
 
-      alert(
-        'Error saving technician'
-      )
-
       console.log(error)
+
+      alert(
+        'Error updating technician'
+      )
 
     } else {
 
       alert(
-        'Technician added successfully'
+        'Technician updated successfully'
       )
 
-      router.push('/')
+      router.push(
+        '/technician-dashboard'
+      )
     }
   }
 
@@ -141,7 +142,7 @@ export default function AddTechnician() {
       <div className="container">
 
         <h1>
-          Add Technician
+          Edit Technician
         </h1>
 
         <form>
@@ -255,11 +256,11 @@ export default function AddTechnician() {
           <button
             type="button"
             onClick={
-              addTechnician
+              updateTechnician
             }
           >
 
-            Save Technician
+            Update Technician
 
           </button>
 

@@ -21,6 +21,9 @@ export default function TechnicianSchedule() {
     setTechnician,
   ] = useState(null)
 
+  const [search, setSearch] =
+    useState('')
+
   useEffect(() => {
 
     fetchSchedule()
@@ -147,32 +150,59 @@ export default function TechnicianSchedule() {
   }
 
   const sortedMeters =
-    [...meters].sort(
-      (a, b) => {
+    [...meters]
 
-        const priorityOrder = {
+      .filter(meter =>
 
-          OVERDUE: 1,
+        meter.name
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
 
-          DUE_THIS_WEEK: 2,
+        ||
 
-          UPCOMING: 3,
+        meter.location
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+
+        ||
+
+        meter.meter_id_tag
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+      )
+
+      .sort(
+        (a, b) => {
+
+          const priorityOrder = {
+
+            OVERDUE: 1,
+
+            DUE_THIS_WEEK: 2,
+
+            UPCOMING: 3,
+          }
+
+          return (
+
+            priorityOrder[
+              getPriority(a)
+            ]
+
+            -
+
+            priorityOrder[
+              getPriority(b)
+            ]
+          )
         }
-
-        return (
-
-          priorityOrder[
-            getPriority(a)
-          ]
-
-          -
-
-          priorityOrder[
-            getPriority(b)
-          ]
-        )
-      }
-    )
+      )
 
   return (
 
@@ -195,6 +225,33 @@ export default function TechnicianSchedule() {
 
         </h2>
 
+        <p>
+
+          <strong>
+            Role:
+          </strong>
+
+          {' '}
+
+          {
+            technician?.role || 'N/A'
+          }
+
+        </p>
+
+        <br />
+
+        <input
+          placeholder="Search schedule..."
+          value={search}
+          onChange={(e) =>
+            setSearch(
+              e.target.value
+            )
+          }
+        />
+
+        <br />
         <br />
 
         {
@@ -236,13 +293,27 @@ export default function TechnicianSchedule() {
                   >
 
                     <h2>
-                      {meter.name}
+
+                      {
+                        meter.meter_id_tag
+                      }
+
                     </h2>
 
                     <p>
+
+                      {
+                        meter.name
+                      }
+
+                    </p>
+
+                    <p>
+
                       {
                         meter.location
                       }
+
                     </p>
 
                     <p>

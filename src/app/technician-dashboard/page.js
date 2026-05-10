@@ -5,6 +5,8 @@ import {
   useState,
 } from 'react'
 
+import Link from 'next/link'
+
 import { supabase }
 from '../../lib/supabase'
 
@@ -20,6 +22,9 @@ export default function TechnicianDashboard() {
 
   const [meters, setMeters] =
     useState([])
+
+  const [search, setSearch] =
+    useState('')
 
   useEffect(() => {
 
@@ -154,215 +159,288 @@ export default function TechnicianDashboard() {
           Technician Dashboard
         </h1>
 
+        <input
+          placeholder="Search technicians..."
+          value={search}
+          onChange={(e) =>
+            setSearch(
+              e.target.value
+            )
+          }
+        />
+
+        <br />
+        <br />
+
         <div className="cards">
 
           {
-            technicians.map(
-              tech => {
+            technicians
 
-                const assignedMeters =
-                  meters.filter(
+              .filter(tech =>
 
-                    meter =>
-
-                      meter.technician_id
-                      === tech.id
+                tech.name
+                  ?.toLowerCase()
+                  .includes(
+                    search.toLowerCase()
                   )
 
-                const overdue =
-                  assignedMeters.filter(
+                ||
 
-                    meter =>
-
-                      getPriority(
-                        meter
-                      )
-                      === 'OVERDUE'
+                tech.role
+                  ?.toLowerCase()
+                  .includes(
+                    search.toLowerCase()
                   )
+              )
 
-                const dueThisWeek =
-                  assignedMeters.filter(
+              .map(
+                tech => {
 
-                    meter =>
+                  const assignedMeters =
+                    meters.filter(
 
-                      getPriority(
-                        meter
-                      )
-                      === 'DUE_THIS_WEEK'
-                  )
+                      meter =>
 
-                return (
+                        meter.technician_id
+                        === tech.id
+                    )
 
-                  <div
-                    key={tech.id}
-                    className="card"
-                    style={{
-                      minWidth:
-                        '420px',
-                    }}
-                  >
+                  const overdue =
+                    assignedMeters.filter(
 
-                    <h2>
-                      {tech.name}
-                    </h2>
+                      meter =>
 
-                    <br />
+                        getPriority(
+                          meter
+                        )
+                        === 'OVERDUE'
+                    )
 
-                    <p>
+                  const dueThisWeek =
+                    assignedMeters.filter(
 
-                      Assigned:
+                      meter =>
 
-                      {' '}
+                        getPriority(
+                          meter
+                        )
+                        === 'DUE_THIS_WEEK'
+                    )
+
+                  return (
+
+                    <div
+                      key={tech.id}
+                      className="card"
+                      style={{
+                        minWidth:
+                          '420px',
+                      }}
+                    >
+
+                      <h2>
+                        {tech.name}
+                      </h2>
+
+                      <p>
+
+                        <strong>
+                          Role:
+                        </strong>
+
+                        {' '}
+
+                        {
+                          tech.role || 'N/A'
+                        }
+
+                      </p>
+
+                      <br />
+
+                      <Link
+                        href={`/edit-technician/${tech.id}`}
+                      >
+
+                        <button
+                          type="button"
+                        >
+
+                          Edit Tech
+
+                        </button>
+
+                      </Link>
+
+                      <br />
+                      <br />
+
+                      <p>
+
+                        Assigned:
+
+                        {' '}
+
+                        {
+                          assignedMeters.length
+                        }
+
+                      </p>
+
+                      <p>
+
+                        Overdue:
+
+                        {' '}
+
+                        <strong
+                          style={{
+                            color:
+                              'red',
+                          }}
+                        >
+
+                          {
+                            overdue.length
+                          }
+
+                        </strong>
+
+                      </p>
+
+                      <p>
+
+                        Due This Week:
+
+                        {' '}
+
+                        <strong
+                          style={{
+                            color:
+                              'orange',
+                          }}
+                        >
+
+                          {
+                            dueThisWeek.length
+                          }
+
+                        </strong>
+
+                      </p>
+
+                      <br />
+
+                      <h3>
+                        Priority Work
+                      </h3>
+
+                      <br />
 
                       {
-                        assignedMeters.length
+                        assignedMeters
+                          .length === 0
+                        ? (
+                          <p>
+                            No assigned work
+                          </p>
+                        )
+                        : (
+                          assignedMeters.map(
+                            meter => {
+
+                              const priority =
+                                getPriority(
+                                  meter
+                                )
+
+                              return (
+
+                                <div
+                                  key={
+                                    meter.id
+                                  }
+                                  style={{
+                                    marginBottom:
+                                      '12px',
+
+                                    padding:
+                                      '12px',
+
+                                    border:
+                                      '1px solid #ddd',
+
+                                    borderRadius:
+                                      '8px',
+
+                                    background:
+                                      priority
+                                      === 'OVERDUE'
+                                        ? '#ffe5e5'
+                                        : priority
+                                        === 'DUE_THIS_WEEK'
+                                          ? '#fff4e5'
+                                          : '#f4f4f4',
+                                  }}
+                                >
+
+                                  <strong>
+
+                                    {
+                                      meter.meter_id_tag
+                                    }
+
+                                  </strong>
+
+                                  <br />
+
+                                  {
+                                    meter.name
+                                  }
+
+                                  <br />
+
+                                  {
+                                    meter.location
+                                  }
+
+                                  <br />
+
+                                  Priority:
+
+                                  {' '}
+
+                                  <strong>
+
+                                    {priority}
+
+                                  </strong>
+
+                                  <br />
+
+                                  Due:
+
+                                  {' '}
+
+                                  {
+                                    getNextProveDate(
+                                      meter
+                                    )
+                                    .toLocaleDateString()
+                                  }
+
+                                </div>
+                              )
+                            }
+                          )
+                        )
                       }
 
-                    </p>
-
-                    <p>
-
-                      Overdue:
-
-                      {' '}
-
-                      <strong
-                        style={{
-                          color:
-                            'red',
-                        }}
-                      >
-
-                        {
-                          overdue.length
-                        }
-
-                      </strong>
-
-                    </p>
-
-                    <p>
-
-                      Due This Week:
-
-                      {' '}
-
-                      <strong
-                        style={{
-                          color:
-                            'orange',
-                        }}
-                      >
-
-                        {
-                          dueThisWeek.length
-                        }
-
-                      </strong>
-
-                    </p>
-
-                    <br />
-
-                    <h3>
-                      Priority Work
-                    </h3>
-
-                    <br />
-
-                    {
-                      assignedMeters
-                        .length === 0
-                      ? (
-                        <p>
-                          No assigned work
-                        </p>
-                      )
-                      : (
-                        assignedMeters.map(
-                          meter => {
-
-                            const priority =
-                              getPriority(
-                                meter
-                              )
-
-                            return (
-
-                              <div
-                                key={
-                                  meter.id
-                                }
-                                style={{
-                                  marginBottom:
-                                    '12px',
-
-                                  padding:
-                                    '12px',
-
-                                  border:
-                                    '1px solid #ddd',
-
-                                  borderRadius:
-                                    '8px',
-
-                                  background:
-                                    priority
-                                    === 'OVERDUE'
-                                      ? '#ffe5e5'
-                                      : priority
-                                      === 'DUE_THIS_WEEK'
-                                        ? '#fff4e5'
-                                        : '#f4f4f4',
-                                }}
-                              >
-
-                                <strong>
-                                  {meter.name}
-                                </strong>
-
-                                <br />
-
-                                {
-                                  meter.location
-                                }
-
-                                <br />
-
-                                Priority:
-
-                                {' '}
-
-                                <strong>
-
-                                  {priority}
-
-                                </strong>
-
-                                <br />
-
-                                Due:
-
-                                {' '}
-
-                                {
-                                  getNextProveDate(
-                                    meter
-                                  )
-                                  .toLocaleDateString()
-                                }
-
-                              </div>
-                            )
-                          }
-                        )
-                      )
-                    }
-
-                  </div>
-                )
-              }
-            )
+                    </div>
+                  )
+                }
+              )
           }
 
         </div>

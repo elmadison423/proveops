@@ -24,6 +24,31 @@ export default function AddMeter() {
     useState('')
 
   const [
+    meterIdTag,
+    setMeterIdTag,
+  ] = useState('')
+
+  const [
+    federalId,
+    setFederalId,
+  ] = useState('')
+
+  const [
+    meterMake,
+    setMeterMake,
+  ] = useState('')
+
+  const [
+    meterModel,
+    setMeterModel,
+  ] = useState('')
+
+  const [
+    meterType,
+    setMeterType,
+  ] = useState('')
+
+  const [
     serialNumber,
     setSerialNumber,
   ] = useState('')
@@ -157,6 +182,21 @@ export default function AddMeter() {
           {
             name,
 
+            meter_id_tag:
+              meterIdTag,
+
+            federal_id:
+              federalId,
+
+            meter_make:
+              meterMake,
+
+            meter_model:
+              meterModel,
+
+            meter_type:
+              meterType,
+
             serial_number:
               serialNumber,
 
@@ -255,6 +295,46 @@ export default function AddMeter() {
           <div>
 
             <label>
+              Meter ID
+            </label>
+
+            <input
+              value={meterIdTag}
+              onChange={(e) =>
+                setMeterIdTag(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
+
+          <div>
+
+            <label>
+              Federal ID
+            </label>
+
+            <input
+              value={federalId}
+              onChange={(e) =>
+                setFederalId(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
+
+          <div>
+
+            <label>
               Meter Name
             </label>
 
@@ -275,13 +355,89 @@ export default function AddMeter() {
           <div>
 
             <label>
+              Meter Make
+            </label>
+
+            <input
+              value={meterMake}
+              onChange={(e) =>
+                setMeterMake(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
+
+          <div>
+
+            <label>
+              Meter Model
+            </label>
+
+            <input
+              value={meterModel}
+              onChange={(e) =>
+                setMeterModel(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
+
+          <div>
+
+            <label>
+              Meter Type
+            </label>
+
+            <select
+              value={meterType}
+              onChange={(e) =>
+                setMeterType(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            >
+
+              <option value="">
+                Select Type
+              </option>
+
+              <option value="Positive Displacement">
+                Positive Displacement
+              </option>
+
+              <option value="Coriolis">
+                Coriolis
+              </option>
+
+              <option value="Turbine">
+                Turbine
+              </option>
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label>
               Serial Number
             </label>
 
             <input
-              value={
-                serialNumber
-              }
+              value={serialNumber}
               onChange={(e) =>
                 setSerialNumber(
                   e.target.value
@@ -364,9 +520,7 @@ export default function AddMeter() {
 
             <input
               type="date"
-              value={
-                lastProveDate
-              }
+              value={lastProveDate}
               onChange={(e) =>
                 setLastProveDate(
                   e.target.value
@@ -386,13 +540,14 @@ export default function AddMeter() {
             </label>
 
             <select
-              value={
-                provingMethod
-              }
+              value={provingMethod}
               onChange={(e) =>
                 setProvingMethod(
                   e.target.value
                 )
+              }
+              onKeyDown={
+                handleEnterKey
               }
             >
 
@@ -404,12 +559,8 @@ export default function AddMeter() {
                 Volume
               </option>
 
-              <option
-                value="WHICHEVER_COMES_FIRST"
-              >
-
+              <option value="WHICHEVER_COMES_FIRST">
                 Whichever Comes First
-
               </option>
 
             </select>
@@ -425,9 +576,7 @@ export default function AddMeter() {
 
             <input
               type="number"
-              value={
-                timeIntervalDays
-              }
+              value={timeIntervalDays}
               onChange={(e) =>
                 setTimeIntervalDays(
                   e.target.value
@@ -448,9 +597,7 @@ export default function AddMeter() {
 
             <input
               type="number"
-              value={
-                volumeInterval
-              }
+              value={volumeInterval}
               onChange={(e) =>
                 setVolumeInterval(
                   e.target.value
@@ -471,9 +618,7 @@ export default function AddMeter() {
 
             <input
               type="number"
-              value={
-                currentVolume
-              }
+              value={currentVolume}
               onChange={(e) =>
                 setCurrentVolume(
                   e.target.value
@@ -494,9 +639,7 @@ export default function AddMeter() {
 
             <input
               type="number"
-              value={
-                lastProveVolume
-              }
+              value={lastProveVolume}
               onChange={(e) =>
                 setLastProveVolume(
                   e.target.value
@@ -516,13 +659,14 @@ export default function AddMeter() {
             </label>
 
             <select
-              value={
-                technicianId
-              }
+              value={technicianId}
               onChange={(e) =>
                 setTechnicianId(
                   e.target.value
                 )
+              }
+              onKeyDown={
+                handleEnterKey
               }
             >
 
