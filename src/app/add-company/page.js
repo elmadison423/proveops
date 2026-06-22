@@ -19,8 +19,10 @@ export default function AddCompany() {
   const router =
     useRouter()
 
-  const [name, setName] =
-    useState('')
+  const [
+    companyName,
+    setCompanyName,
+  ] = useState('')
 
   const [
     contactEmail,
@@ -30,6 +32,31 @@ export default function AddCompany() {
   const [phone, setPhone] =
     useState('')
 
+  function handleEnterKey(
+    e
+  ) {
+
+    if (
+      e.key === 'Enter'
+    ) {
+
+      e.preventDefault()
+
+      const form =
+        e.target.form
+
+      const index =
+        Array.prototype.indexOf.call(
+          form,
+          e.target
+        )
+
+      form.elements[
+        index + 1
+      ]?.focus()
+    }
+  }
+
   async function addCompany() {
 
     const user =
@@ -38,24 +65,73 @@ export default function AddCompany() {
           .getUser()
       ).data.user
 
+    if (!user) {
+
+      alert(
+        'No logged in user'
+      )
+
+      return
+    }
+
+    const {
+      data: profile,
+      error: profileError,
+    } = await supabase
+      .from("Meters")('Profiles')
+      .select('*')
+      .eq(
+        'user_id',
+        user.id
+      )
+      .single()
+
+    if (
+      profileError ||
+      !profile
+    ) {
+
+      alert(
+        'Profile not found'
+      )
+
+      console.log(
+        profileError
+      )
+
+      return
+    }
+
     const { error } =
       await supabase
-        .from('Companies')
+        .from("Meters")('Organizations')
         .insert([
           {
-            name,
+            name:
+              companyName,
+
             contact_email:
               contactEmail,
+
             phone,
-            user_id:
+
+            owner_id:
               user.id,
           },
         ])
 
-    if (!error) {
+    if (error) {
 
       alert(
-        'Company added'
+        'Error saving company'
+      )
+
+      console.log(error)
+
+    } else {
+
+      alert(
+        'Company added successfully'
       )
 
       router.push('/')
@@ -81,11 +157,14 @@ export default function AddCompany() {
             </label>
 
             <input
-              value={name}
+              value={companyName}
               onChange={(e) =>
-                setName(
+                setCompanyName(
                   e.target.value
                 )
+              }
+              onKeyDown={
+                handleEnterKey
               }
             />
 
@@ -98,13 +177,14 @@ export default function AddCompany() {
             </label>
 
             <input
-              value={
-                contactEmail
-              }
+              value={contactEmail}
               onChange={(e) =>
                 setContactEmail(
                   e.target.value
                 )
+              }
+              onKeyDown={
+                handleEnterKey
               }
             />
 
@@ -123,15 +203,16 @@ export default function AddCompany() {
                   e.target.value
                 )
               }
+              onKeyDown={
+                handleEnterKey
+              }
             />
 
           </div>
 
           <button
             type="button"
-            onClick={
-              addCompany
-            }
+            onClick={addCompany}
           >
 
             Save Company

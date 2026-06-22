@@ -5,6 +5,8 @@ import {
   useState,
 } from 'react'
 
+import L from 'leaflet'
+
 import {
   MapContainer,
   TileLayer,
@@ -19,6 +21,45 @@ from '../../lib/supabase'
 
 import ProtectedRoute
 from '../../components/ProtectedRoute'
+
+const redIcon = new L.Icon({
+
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+
+  iconSize: [25, 41],
+
+  iconAnchor: [12, 41],
+})
+
+const yellowIcon = new L.Icon({
+
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+
+  iconSize: [25, 41],
+
+  iconAnchor: [12, 41],
+})
+
+const greenIcon = new L.Icon({
+
+  iconUrl:
+    'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+
+  shadowUrl:
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+
+  iconSize: [25, 41],
+
+  iconAnchor: [12, 41],
+})
 
 export default function MapComponent() {
 
@@ -171,6 +212,45 @@ export default function MapComponent() {
     return 'OK'
   }
 
+  function getMapIcon(
+    meter
+  ) {
+
+    const status =
+      getStatus(meter)
+
+    const nextProve =
+      getNextProveDate(
+        meter
+      )
+
+    const today =
+      new Date()
+
+    const nextWeek =
+      new Date()
+
+    nextWeek.setDate(
+      today.getDate() + 7
+    )
+
+    if (
+      status === 'DUE'
+    ) {
+
+      return redIcon
+    }
+
+    if (
+      nextProve <= nextWeek
+    ) {
+
+      return yellowIcon
+    }
+
+    return greenIcon
+  }
+
   const filteredMeters =
     meters.filter(meter => {
 
@@ -204,17 +284,17 @@ export default function MapComponent() {
 
     <ProtectedRoute>
 
-      <div
-        style={{
-          height: '100vh',
-          width: '100%',
-        }}
-      >
+      <div className="container">
+
+        <h1>
+          Meter Map
+        </h1>
 
         <div
+          className="card"
           style={{
-            padding: '10px',
-            background: 'white',
+            marginBottom:
+              '20px',
           }}
         >
 
@@ -261,10 +341,6 @@ export default function MapComponent() {
                 e.target.value
               )
             }
-            style={{
-              marginLeft:
-                '10px',
-            }}
           >
 
             <option value="ALL">
@@ -290,8 +366,9 @@ export default function MapComponent() {
           ]}
           zoom={8}
           style={{
-            height: '90%',
+            height: '75vh',
             width: '100%',
+            borderRadius: '18px',
           }}
         >
 
@@ -320,17 +397,30 @@ export default function MapComponent() {
                       meter.latitude,
                       meter.longitude,
                     ]}
+                    icon={getMapIcon(meter)}
                   >
 
                     <Popup>
 
                       <strong>
-                        {meter.name}
+
+                        {
+                          meter.meter_id_tag
+                        }
+
                       </strong>
 
                       <br />
 
-                      {meter.location}
+                      {
+                        meter.name
+                      }
+
+                      <br />
+
+                      {
+                        meter.location
+                      }
 
                       <br />
 

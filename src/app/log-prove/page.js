@@ -15,6 +15,8 @@ from '../../lib/supabase'
 import ProtectedRoute
 from '../../components/ProtectedRoute'
 
+import toast from 'react-hot-toast'
+
 export default function LogProve() {
 
   const router =
@@ -24,7 +26,7 @@ export default function LogProve() {
     useSearchParams()
 
   const meterId =
-    searchParams.get('meter')
+  searchParams.get('id')
 
   const [
     meterFactor,
@@ -90,115 +92,138 @@ export default function LogProve() {
     }
   }
 
-  async function saveProve() {
+ async function saveProve() {
+  const user =
+    (await supabase.auth.getUser())
+      .data.user
 
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
+  if (!user) return
 
-    if (!user) return
-
-    const {
-      data: profile,
-    } = await supabase
+  const { data: profile } =
+    await supabase
       .from('Profiles')
       .select('*')
-      .eq(
-        'user_id',
-        user.id
-      )
+      .eq('user_id', user.id)
       .single()
 
-    const today =
-      new Date()
-        .toISOString()
-        .split('T')[0]
+  const { data: meter, error: meterError } =
+  await supabase
+    .from('meters')
+    .select('*')
+    .eq('id', meterId)
+    .single()
 
-    const { error } =
-      await supabase
-        .from('ProveHistory')
-        .insert([
-          {
-            meter_id:
-              meterId,
+console.log('meterId =', meterId)
+console.log('meter =', meter)
+console.log('meterError =', meterError)
 
-            technician_id:
-              null,
-
-            prove_date:
-              today,
-
-            meter_factor:
-              Number(
-                meterFactor
-              ),
-
-            prover_volume:
-              Number(
-                proverVolume
-              ),
-
-            flow_rate:
-              Number(
-                flowRate
-              ),
-
-            totalizer:
-              Number(
-                totalizer
-              ),
-
-            meter_temp:
-              Number(
-                meterTemp
-              ),
-
-            certified_temp:
-              Number(
-                certifiedTemp
-              ),
-
-            seals,
-
-            notes,
-
-            status,
-
-            organization_id:
-              profile.organization_id,
-          },
-        ])
-
-    if (error) {
-
-      console.log(error)
-
-      alert(
-        'Error saving prove'
-      )
-
-      return
-    }
-
-    await supabase
-      .from('Meters')
-      .update({
-        last_prove_date:
-          today,
-      })
-      .eq(
-        'id',
-        meterId
-      )
-
-    alert(
-      'Prove logged successfully'
-    )
-
-    router.push('/meters')
+  if (!meter) {
+    alert('Meter not found')
+    return
   }
+
+  const today = new Date()
+    .toISOString()
+    .split('T')[0]
+
+  const { error } =
+    await supabase
+      .from('ProveHistory')
+      .insert([
+        {
+          meter_id: meter.id,
+
+          meter_name: meter.name,
+
+          location: meter.location,
+
+          technician_id: null,
+
+          prove_date: today,
+
+          meter_factor:
+            Number(meterFactor),
+
+          prover_volume:
+            Number(proverVolume),
+
+          flow_rate:
+            Number(flowRate),
+
+          totalizer:
+            Number(totalizer),
+
+          meter_temp:
+            Number(meterTemp),
+
+          certified_temp:
+            Number(certifiedTemp),
+
+          seals,
+
+          notes,
+
+          status,
+
+          organization_id:
+            profile.organization_id,
+        },
+      ])
+
+  if (error) {
+    console.log(error)
+    alert('Error saving prove')
+    return
+  }
+
+  const nextDueDate = new Date(today)
+
+nextDueDate.setDate(
+  nextDueDate.getDate() +
+  Number(meter.time_interval_days || 30)
+)
+
+console.log(
+  'today =',
+  today
+)
+
+console.log(
+  'interval =',
+  meter.time_interval_days
+)
+
+console.log(
+  'nextDueDate =',
+  nextDueDate
+)
+
+console.log('meter.id =', meter.id)
+console.log('typeof meter.id =', typeof meter.id)
+
+const updateResult = await supabase
+  .from("meters")
+  .update({
+    last_prove_date: today,
+    next_due_date:
+      nextDueDate
+        .toISOString()
+        .split('T')[0],
+  })
+  .eq('id', meter.id)
+  .select()
+
+console.log(
+  'UPDATE RESULT =',
+  updateResult
+)
+
+  alert(
+    'Prove logged successfully'
+  )
+
+  router.push('/history')
+}
 
   return (
 

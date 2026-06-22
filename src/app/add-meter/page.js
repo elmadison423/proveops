@@ -9,6 +9,8 @@ import {
   useRouter,
 } from 'next/navigation'
 
+import toast from 'react-hot-toast'
+
 import { supabase }
 from '../../lib/supabase'
 
@@ -156,6 +158,20 @@ export default function AddMeter() {
 
   async function addMeter() {
 
+    if (
+      !meterIdTag ||
+      !name ||
+      !location ||
+      !provingMethod
+    ) {
+
+      toast.error(
+        'Please complete all required fields'
+      )
+
+      return
+    }
+
     const user =
       (
         await supabase.auth
@@ -177,7 +193,7 @@ export default function AddMeter() {
 
     const { error } =
       await supabase
-        .from('Meters')
+        .from('meters')
         .insert([
           {
             name,
@@ -264,13 +280,13 @@ export default function AddMeter() {
 
       console.log(error)
 
-      alert(
+      toast.error(
         'Error saving meter'
       )
 
     } else {
 
-      alert(
+      toast.success(
         'Meter added successfully'
       )
 
@@ -295,7 +311,7 @@ export default function AddMeter() {
           <div>
 
             <label>
-              Meter ID
+              Meter ID *
             </label>
 
             <input
@@ -335,7 +351,7 @@ export default function AddMeter() {
           <div>
 
             <label>
-              Meter Name
+              Meter Name *
             </label>
 
             <input
@@ -453,7 +469,7 @@ export default function AddMeter() {
           <div>
 
             <label>
-              Location
+              Location *
             </label>
 
             <input
@@ -536,7 +552,7 @@ export default function AddMeter() {
           <div>
 
             <label>
-              Proving Method
+              Proving Method *
             </label>
 
             <select
@@ -637,18 +653,18 @@ export default function AddMeter() {
               Last Prove Volume
             </label>
 
-            <input
-              type="number"
-              value={lastProveVolume}
-              onChange={(e) =>
-                setLastProveVolume(
-                  e.target.value
-                )
-              }
-              onKeyDown={
-                handleEnterKey
-              }
-            />
+      <input
+  type="number"
+  value={lastProveVolume}
+  onChange={(e) =>
+    setLastProveVolume(
+      e.target.value
+    )
+  }
+  onKeyDown={
+    handleEnterKey
+  }
+/>
 
           </div>
 

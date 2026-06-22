@@ -21,6 +21,8 @@ const supabase =
 
 export async function GET() {
 
+  console.log("MONTHLY REPORT JOB STARTED")
+
   try {
 
     const {
@@ -70,9 +72,44 @@ export async function GET() {
         <h2>Upcoming Meter Schedule</h2>
         <ul>
       `
+const today = new Date()
 
-      ;(meters || [])
-        .forEach(meter => {
+const nextMonthStart =
+  new Date(
+    today.getFullYear(),
+    today.getMonth() + 1,
+    1
+  )
+
+const nextMonthEnd =
+  new Date(
+    today.getFullYear(),
+    today.getMonth() + 2,
+    0
+  )
+
+const upcomingMeters =
+  (meters || []).filter(meter => {
+
+    const nextDate =
+      new Date(
+        meter.last_prove_date
+      )
+
+    nextDate.setDate(
+      nextDate.getDate()
+      +
+      meter.time_interval_days
+    )
+
+    return (
+      nextDate >= nextMonthStart &&
+      nextDate <= nextMonthEnd
+    )
+  })
+
+      upcomingMeters
+  .forEach(meter => {
 
           const nextDate =
             new Date(

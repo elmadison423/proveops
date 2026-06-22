@@ -11,10 +11,23 @@ from '../../lib/supabase'
 import ProtectedRoute
 from '../../components/ProtectedRoute'
 
+import { useRouter } from 'next/navigation'
+
 export default function DispatchBoard() {
+
+  const router = useRouter()
+
+  const [search, setSearch] =
+  useState('')
+
+const [sortBy, setSortBy] =
+  useState('priority')
 
   const [meters, setMeters] =
     useState([])
+
+    const [filter, setFilter] =
+  useState('ALL')
 
   const [
     technicians,
@@ -63,10 +76,6 @@ export default function DispatchBoard() {
     } = await supabase
       .from('Technicians')
       .select('*')
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
 
     setMeters(
       meterData || []
@@ -98,15 +107,14 @@ export default function DispatchBoard() {
     meter
   ) {
 
-    const today =
-      new Date()
+    const today = new Date()
 
-    const nextWeek =
-      new Date()
+const nextWeek =
+  new Date(today)
 
-    nextWeek.setDate(
-      today.getDate() + 7
-    )
+nextWeek.setDate(
+  today.getDate() + 7
+)
 
     const nextProve =
       getNextProveDate(
@@ -122,54 +130,124 @@ export default function DispatchBoard() {
       (meter.last_prove_volume || 0)
 
     const volumeDue =
-
-      volumeUsed >=
-      (meter.volume_interval || 0)
-
+  meter.volume_interval &&
+  meter.current_volume &&
+  meter.current_volume >= meter.volume_interval
+  
     if (
       nextProve < today ||
       volumeDue
     ) {
 
-      return 'OVERDUE'
+      return 'CRITICAL'
     }
 
     if (
       nextProve <= nextWeek
     ) {
 
-      return 'DUE_THIS_WEEK'
+      return 'HIGH'
     }
 
-    return 'UPCOMING'
+    return 'NORMAL'
   }
 
-  function getTechnicianName(
-    technicianId
-  ) {
+  const sortedMeters =
 
-    const technician =
-      technicians.find(
+    [...meters].sort(
+      (a, b) => {
 
-        tech =>
+        const priorityOrder = {
 
-          tech.id ===
-          technicianId
-      )
+          CRITICAL: 1,
 
-    return technician
-      ? technician.name
-      : 'Unassigned'
-  }
+          HIGH: 2,
 
-  const priorityMeters =
-    meters.filter(
+          NORMAL: 3,
+        }
 
-      meter =>
+        return (
 
-        getPriority(meter)
-        !== 'UPCOMING'
+          priorityOrder[
+            getPriority(a)
+          ]
+
+          -
+
+          priorityOrder[
+            getPriority(b)
+          ]
+        )
+      }
     )
+
+    const filteredMeters =
+  [...meters]
+
+    .filter(meter => {
+
+      const matchesFilter =
+        filter === 'ALL'
+        ||
+        getPriority(meter)
+        === filter
+
+      const searchText = `
+  ${meter.meter_id_tag || ''}
+  ${meter.name || ''}
+  ${meter.location || ''}
+`
+.toLowerCase()
+
+      const matchesSearch =
+        searchText.includes(
+          search.toLowerCase()
+        )
+
+      return (
+        matchesFilter
+        &&
+        matchesSearch
+      )
+    })
+
+    .sort((a, b) => {
+
+      if (sortBy === 'dueDate') {
+
+        return (
+          getNextProveDate(a)
+          -
+          getNextProveDate(b)
+        )
+      }
+
+      if (sortBy === 'serial') {
+
+        return (
+          (a.serial_number || '')
+          .localeCompare(
+            b.serial_number || ''
+          )
+        )
+      }
+
+      const priorityOrder = {
+        CRITICAL: 1,
+        HIGH: 2,
+        NORMAL: 3,
+      }
+
+      return (
+        priorityOrder[
+          getPriority(a)
+        ]
+        -
+        priorityOrder[
+          getPriority(b)
+        ]
+      )
+    })
 
   return (
 
@@ -183,106 +261,153 @@ export default function DispatchBoard() {
 
         <br />
 
-        {
-          priorityMeters.length === 0
-          ? (
+        <div className="dispatch-toolbar">
+
+  "Meters"
+    type="text"
+    placeholder="Search meters..."
+    value={search}
+    onChange={e =>
+      setSearch(
+        e.target.value
+      )
+    }
+    className="dispatch-search"
+  />
+
+  <select
+    value={sortBy}
+    onChange={e =>
+      setSortBy(
+        e.target.value
+      )
+    }
+    className="dispatch-sort"
+  >
+
+    <option value="priority">
+      Sort by Priority
+    </option>
+
+    <option value="dueDate">
+      Sort by Due Date
+    </option>
+
+    <option value="serial">
+      Sort by Serial
+    </option>
+
+  </select>
+
+</div>
+
+<div className="dispatch-filters">
+
+  {
+    [
+      'ALL',
+      'CRITICAL',
+      'HIGH',
+      'NORMAL',
+    ].map(type => (
+
+      <button
+        key={type}
+        className={
+          filter === type
+          ? 'dispatch-filter active'
+          : 'dispatch-filter'
+        }
+        onClick={() =>
+          setFilter(type)
+        }
+      >
+
+        {type}
+
+      </button>
+    ))
+  }
+
+</div>
+
+<br />
+
+        <br />
+
+        <div className="cards">
+
+  {
+    filteredMeters.map(
+      meter => {
+
+        const priority =
+          getPriority(meter)
+
+        const technician =
+          technicians.find(
+            tech =>
+              tech.id ===
+              meter.technician_id
+          )
+
+        return (
+
+          <div
+  key={meter.id}
+  className={`dispatch-card ${priority.toLowerCase()}`}
+  onClick={() => router.push(`/meter-detail?id=${meter.id}`)}
+  style={{ cursor: 'pointer' }}
+>
+           <h2>
+            {meter.meter_id_tag}
+           </h2>
 
             <p>
-              No priority work
+              {meter.name}
             </p>
 
-          ) : (
+            <p>
+              {meter.location}
+            </p>
 
-            priorityMeters.map(
-              meter => {
-
-                const priority =
-                  getPriority(
-                    meter
-                  )
-
-                return (
-
-                  <div
-                    key={meter.id}
-                    className="card"
-                    style={{
-                      marginBottom:
-                        '15px',
-
-                      background:
-                        priority
-                        === 'OVERDUE'
-                          ? '#ffe5e5'
-                          : '#fff4e5',
-                    }}
-                  >
-
-                    <h2>
-                      {meter.name}
-                    </h2>
-
-                    <p>
-                      {
-                        meter.location
-                      }
-                    </p>
-
-                    <p>
-
-                      Technician:
-
-                      {' '}
-
-                      <strong>
-
-                        {
-                          getTechnicianName(
-                            meter.technician_id
-                          )
-                        }
-
-                      </strong>
-
-                    </p>
-
-                    <p>
-
-                      Priority:
-
-                      {' '}
-
-                      <strong>
-
-                        {priority}
-
-                      </strong>
-
-                    </p>
-
-                    <p>
-
-                      Due Date:
-
-                      {' '}
-
-                      {
-                        getNextProveDate(
-                          meter
-                        )
-                        .toLocaleDateString()
-                      }
-
-                    </p>
-
-                  </div>
-                )
+            <p>
+              Technician:
+              {' '}
+              {
+                technician?.name ||
+                'Unassigned'
               }
-            )
-          )
-        }
+            </p>
 
-      </div>
+            <div
+              className={`priority-badge ${priority.toLowerCase()}`}
+            >
+              {priority}
+            </div>
+
+            <p
+              style={{
+                marginTop: '14px'
+              }}
+            >
+              Due Date:
+              {' '}
+              {
+                getNextProveDate(meter)
+                .toLocaleDateString()
+              }
+            </p>
+
+          </div>
+        )
+      }
+    )
+  }
+
+</div>
+
+        </div>
 
     </ProtectedRoute>
   )

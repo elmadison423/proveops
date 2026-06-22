@@ -8,6 +8,8 @@ import {
   useRouter,
 } from 'next/navigation'
 
+import toast from 'react-hot-toast'
+
 import { supabase }
 from '../../lib/supabase'
 
@@ -24,13 +26,7 @@ export default function LoginPage() {
     setPassword,
   ] = useState('')
 
-  async function signIn(
-    e
-  ) {
-
-    if (e) {
-      e.preventDefault()
-    }
+  async function login() {
 
     const { error } =
       await supabase.auth
@@ -43,34 +39,29 @@ export default function LoginPage() {
 
     if (error) {
 
-      alert(error.message)
+      toast.error(
+        'Invalid login credentials'
+      )
 
     } else {
+
+      toast.success(
+        'Login successful'
+      )
 
       router.push('/')
     }
   }
 
-  async function signUp() {
+  function handleEnterKey(
+    e
+  ) {
 
-    const { error } =
-      await supabase.auth
-        .signUp({
+    if (
+      e.key === 'Enter'
+    ) {
 
-          email,
-
-          password,
-        })
-
-    if (error) {
-
-      alert(error.message)
-
-    } else {
-
-      alert(
-        'Account created successfully'
-      )
+      login()
     }
   }
 
@@ -78,110 +69,134 @@ export default function LoginPage() {
 
     <div
       style={{
+
+        minHeight: '100vh',
+
         display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        background: '#f4f4f4',
+
+        justifyContent:
+          'center',
+
+        alignItems:
+          'center',
+
+        background:
+          'linear-gradient(135deg,#0f172a,#1e293b,#312e81)',
+
+        padding: '20px',
       }}
     >
 
       <div
         style={{
-          background: 'white',
+
+          width: '100%',
+
+          maxWidth: '450px',
+
+          background:
+            'rgba(255,255,255,0.08)',
+
+          border:
+            '1px solid rgba(255,255,255,0.08)',
+
+          backdropFilter:
+            'blur(18px)',
+
+          borderRadius:
+            '24px',
+
           padding: '40px',
-          borderRadius: '12px',
-          width: '350px',
+
           boxShadow:
-            '0 0 10px rgba(0,0,0,0.1)',
+            '0 20px 40px rgba(0,0,0,0.35)',
         }}
       >
 
         <h1
           style={{
-            marginBottom: '20px',
+
+            textAlign: 'center',
+
+            marginBottom:
+              '10px',
+
+            fontSize: '2.5rem',
           }}
         >
 
-          ProveOps Login
+          ProveOps
 
         </h1>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) =>
-            setEmail(
-              e.target.value
-            )
-          }
+        <p
           style={{
-            width: '100%',
-            padding: '10px',
-            marginBottom: '10px',
+
+            textAlign: 'center',
+
+            opacity: 0.7,
+
+            marginBottom:
+              '35px',
           }}
-        />
+        >
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) =>
-            setPassword(
-              e.target.value
-            )
-          }
-          onKeyUp={(e) => {
+          Operational Intelligence Platform
 
-            if (
-              e.key === 'Enter'
-            ) {
+        </p>
 
-              signIn()
+        <div>
+
+          <label>
+            Email
+          </label>
+
+          <input
+            type="email"
+            value={email}
+            onChange={(e) =>
+              setEmail(
+                e.target.value
+              )
             }
-          }}
-          style={{
-            width: '100%',
-            padding: '10px',
-            marginBottom: '20px',
-          }}
-        />
+            onKeyDown={
+              handleEnterKey
+            }
+            placeholder="Enter email"
+          />
+
+        </div>
+
+        <div>
+
+          <label>
+            Password
+          </label>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+           onKeyDown={handleEnterKey}
+            placeholder="Enter password"
+          />
+
+        </div>
 
         <button
           type="button"
-          onClick={signIn}
+          onClick={login}
           style={{
             width: '100%',
-            padding: '12px',
-            background: '#0b1736',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-          }}
-        >
-
-          Sign In
-
-        </button>
-
-        <button
-          type="button"
-          onClick={signUp}
-          style={{
-            width: '100%',
-            padding: '12px',
             marginTop: '10px',
-            background: '#1f5eff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
           }}
         >
 
-          Create Account
+          Login
 
         </button>
 

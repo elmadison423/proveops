@@ -159,7 +159,7 @@ export default function TechnicianDashboard() {
           Technician Dashboard
         </h1>
 
-        <input
+        "Meters"
           placeholder="Search technicians..."
           value={search}
           onChange={(e) =>
@@ -232,10 +232,9 @@ export default function TechnicianDashboard() {
 
                     <div
                       key={tech.id}
-                      className="card"
+                      className="card compact-card"
                       style={{
-                        minWidth:
-                          '420px',
+                        width: '420px',
                       }}
                     >
 
@@ -297,7 +296,7 @@ export default function TechnicianDashboard() {
                         <strong
                           style={{
                             color:
-                              'red',
+                              '#f87171',
                           }}
                         >
 
@@ -318,7 +317,7 @@ export default function TechnicianDashboard() {
                         <strong
                           style={{
                             color:
-                              'orange',
+                              '#fbbf24',
                           }}
                         >
 
@@ -338,104 +337,106 @@ export default function TechnicianDashboard() {
 
                       <br />
 
-                      {
-                        assignedMeters
-                          .length === 0
-                        ? (
-                          <p>
-                            No assigned work
-                          </p>
-                        )
-                        : (
-                          assignedMeters.map(
-                            meter => {
+                      <div className="cards">
 
-                              const priority =
-                                getPriority(
-                                  meter
-                                )
+                        {
+                          assignedMeters
+                            .length === 0
+                          ? (
+                            <p>
+                              No assigned work
+                            </p>
+                          )
+                          : (
+                            assignedMeters.map(
+                              meter => {
 
-                              return (
+                                const priority =
+                                  getPriority(
+                                    meter
+                                  )
 
-                                <div
-                                  key={
-                                    meter.id
-                                  }
-                                  style={{
-                                    marginBottom:
-                                      '12px',
+                                return (
 
-                                    padding:
-                                      '12px',
+                                  <div
+                                    key={
+                                      meter.id
+                                    }
+                                    className="card compact-card"
+                                    style={{
 
-                                    border:
-                                      '1px solid #ddd',
+                                      width: '320px',
 
-                                    borderRadius:
-                                      '8px',
+                                      marginBottom:
+                                        '10px',
 
-                                    background:
-                                      priority
-                                      === 'OVERDUE'
-                                        ? '#ffe5e5'
-                                        : priority
-                                        === 'DUE_THIS_WEEK'
-                                          ? '#fff4e5'
-                                          : '#f4f4f4',
-                                  }}
-                                >
+                                      padding:
+                                        '14px',
 
-                                  <strong>
+                                      background:
+                                        'rgba(255,255,255,0.06)',
+                                    }}
+                                  >
+
+                                    <strong>
+
+                                      {
+                                        meter.meter_id_tag
+                                      }
+
+                                    </strong>
+
+                                    <br />
 
                                     {
-                                      meter.meter_id_tag
+                                      meter.name
                                     }
 
-                                  </strong>
+                                    <br />
 
-                                  <br />
+                                    {
+                                      meter.location
+                                    }
 
-                                  {
-                                    meter.name
-                                  }
+                                    <br />
+                                    <br />
 
-                                  <br />
+                                    <div
+                                      className={`status-badge ${
+                                        priority === 'OVERDUE'
+                                          ? 'status-overdue'
+                                          : priority === 'DUE_THIS_WEEK'
+                                          ? 'status-due'
+                                          : 'status-ok'
+                                      }`}
+                                    >
 
-                                  {
-                                    meter.location
-                                  }
+                                      {priority}
 
-                                  <br />
+                                    </div>
 
-                                  Priority:
+                                    <br />
+                                    <br />
 
-                                  {' '}
+                                    Due:
 
-                                  <strong>
+                                    {' '}
 
-                                    {priority}
+                                    {
+                                      getNextProveDate(
+                                        meter
+                                      )
+                                      .toLocaleDateString()
+                                    }
 
-                                  </strong>
-
-                                  <br />
-
-                                  Due:
-
-                                  {' '}
-
-                                  {
-                                    getNextProveDate(
-                                      meter
-                                    )
-                                    .toLocaleDateString()
-                                  }
-
-                                </div>
-                              )
-                            }
+                                  </div>
+                                )
+                              }
+                            )
                           )
-                        )
-                      }
+                        }
+
+                      </div>
 
                     </div>
                   )

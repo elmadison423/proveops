@@ -152,7 +152,7 @@ export default function AddTechnician() {
               Name
             </label>
 
-            <input
+            "Meters"
               value={name}
               onChange={(e) =>
                 setName(
@@ -172,7 +172,7 @@ export default function AddTechnician() {
               Email
             </label>
 
-            <input
+            "Meters"
               value={email}
               onChange={(e) =>
                 setEmail(
@@ -192,7 +192,7 @@ export default function AddTechnician() {
               Phone
             </label>
 
-            <input
+            "Meters"
               value={phone}
               onChange={(e) =>
                 setPhone(

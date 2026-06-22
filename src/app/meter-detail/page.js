@@ -21,7 +21,7 @@ export default function MeterDetail() {
     useSearchParams()
 
   const meterId =
-    searchParams.get('meter')
+  searchParams.get('id')
 
   const [meter, setMeter] =
     useState(null)
@@ -73,237 +73,82 @@ export default function MeterDetail() {
     )
   }
 
-  return (
+return (
+  <ProtectedRoute>
 
-    <ProtectedRoute>
+    <div className="container">
 
-      <div className="container">
+      {meter && (
+        <div
+          className="card"
+          style={{
+            marginBottom: '20px',
+            padding: '24px'
+          }}
+        >
+          <h1>
+            {meter.meter_id_tag}
+          </h1>
 
-        {
-          meter && (
+          <br />
 
-            <div
-              className="card"
-              style={{
-                marginBottom:
-                  '20px',
-              }}
-            >
+          <p>
+            <strong>Name:</strong>{' '}
+            {meter.name}
+          </p>
 
-              <h1>
-                {meter.name}
-              </h1>
+          <p>
+            <strong>Location:</strong>{' '}
+            {meter.location}
+          </p>
 
-              <br />
+          <p>
+            <strong>Status:</strong>{' '}
+            {meter.status || 'ACTIVE'}
+          </p>
 
-              <p>
+          <p>
+            <strong>Frequency:</strong>{' '}
+            {meter.prove_frequency || '30 Days'}
+          </p>
 
-                <strong>
-                  Serial:
-                </strong>
+          <p>
+            <strong>Next Due:</strong>{' '}
+            {meter.next_due_date}
+          </p>
+        </div>
+      )}
 
-                {' '}
+      <h2>
+        Prove History
+      </h2>
 
-                {
-                  meter.serial_number
-                }
+      <br />
 
-              </p>
-
-              <p>
-
-                <strong>
-                  Location:
-                </strong>
-
-                {' '}
-
-                {
-                  meter.location
-                }
-
-              </p>
-
-              <p>
-
-                <strong>
-                  Proving Method:
-                </strong>
-
-                {' '}
-
-                {
-                  meter.proving_method
-                }
-
-              </p>
-
-            </div>
-          )
-        }
-
-        <h2>
-          Prove History
-        </h2>
-
-        <br />
-
-        {
-          proveHistory.length === 0
+      {
+        proveHistory.length === 0
           ? (
-
-            <p>
-              No prove history
-            </p>
-
-          ) : (
-
-            proveHistory.map(
-              prove => (
-
-                <div
-                  key={prove.id}
-                  className="card"
-                  style={{
-                    marginBottom:
-                      '15px',
-                  }}
-                >
-
-                  <p>
-
-                    <strong>
-                      Date:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.prove_date
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Status:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.status
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Meter Factor:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.meter_factor
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Flow Rate:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.flow_rate
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Totalizer:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.totalizer
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Meter Temp:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.meter_temp
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Certified Temp:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.certified_temp
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Seals:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.seals
-                    }
-
-                  </p>
-
-                  <p>
-
-                    <strong>
-                      Notes:
-                    </strong>
-
-                    {' '}
-
-                    {
-                      prove.notes
-                    }
-
-                  </p>
-
-                </div>
-              )
-            )
+            <p>No prove history</p>
           )
-        }
+          : (
+            proveHistory.map(prove => (
+              <div
+                key={prove.id}
+                className="card"
+                style={{
+                  marginBottom: '12px'
+                }}
+              >
+                <p>
+                  {prove.date}
+                </p>
+              </div>
+            ))
+          )
+      }
 
-      </div>
+    </div>
 
-    </ProtectedRoute>
-  )
+  </ProtectedRoute>
+)
 }
