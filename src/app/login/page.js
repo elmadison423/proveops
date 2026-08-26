@@ -14,51 +14,51 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
- async function login() {
+  async function login() {
 
-  if (loading) return;
+    if (loading) return
 
-  setLoading(true);
+    setLoading(true)
 
-  const { error } =
-    await supabase.auth.signInWithPassword({
+    const { error } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-      email,
-      password,
+    if (error) {
 
-    });
+      toast.error("Invalid email or password.")
 
-  if (error) {
+      setLoading(false)
 
-    toast.error("Invalid email or password.");
+      return
+    }
 
-    setLoading(false);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-    return;
+    if (!session) {
+
+      toast.error("Unable to establish session.")
+
+      setLoading(false)
+
+      return
+    }
+
+    toast.success("Welcome back!")
+
+    router.replace("/")
   }
-
- const {
-  data: { session },
-} = await supabase.auth.getSession();
-
-if (!session) {
-  toast.error("Unable to establish session.");
-  setLoading(false);
-  return;
-}
-
-toast.success("Welcome back!");
-
-router.replace("/");
-}
 
   function handleEnterKey(e) {
 
     if (e.key === 'Enter') {
-
       login()
-
     }
+
   }
 
   return (
@@ -75,7 +75,7 @@ router.replace("/");
         alignItems: 'center',
 
         background:
-          'linear-gradient(135deg,#0f172a,#1e293b,#312e81)',
+          'linear-gradient(135deg, #0f172a, #1e293b, #312e81)',
 
         padding: '20px',
 
@@ -89,33 +89,34 @@ router.replace("/");
 
           maxWidth: '450px',
 
-          background:
-            'rgba(255,255,255,0.08)',
+          background: '#ffffff',
 
-          border:
-            '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid #e2e8f0',
 
-          backdropFilter:
-            'blur(18px)',
-
-          borderRadius: '24px',
+          borderRadius: '20px',
 
           padding: '40px',
 
           boxShadow:
-            '0 20px 40px rgba(0,0,0,0.35)',
+            '0 20px 50px rgba(0,0,0,0.25)',
 
         }}
       >
+
+        {/* LOGO / TITLE */}
 
         <h1
           style={{
 
             textAlign: 'center',
 
-            marginBottom: '10px',
+            marginBottom: '8px',
 
             fontSize: '2.5rem',
+
+            fontWeight: '700',
+
+            color: '#0f172a',
 
           }}
         >
@@ -129,9 +130,11 @@ router.replace("/");
 
             textAlign: 'center',
 
-            opacity: 0.7,
+            color: '#64748b',
 
-            marginBottom: '35px',
+            marginBottom: '32px',
+
+            fontSize: '15px',
 
           }}
         >
@@ -140,9 +143,30 @@ router.replace("/");
 
         </p>
 
+
+        {/* EMAIL */}
+
         <div>
 
-          <label>Email</label>
+          <label
+            style={{
+
+              display: 'block',
+
+              marginBottom: '8px',
+
+              fontWeight: '600',
+
+              fontSize: '14px',
+
+              color: '#334155',
+
+            }}
+          >
+
+            Email
+
+          </label>
 
           <input
 
@@ -158,9 +182,34 @@ router.replace("/");
 
             onKeyDown={handleEnterKey}
 
+            style={{
+
+              width: '100%',
+
+              boxSizing: 'border-box',
+
+              padding: '12px 14px',
+
+              background: '#ffffff',
+
+              color: '#0f172a',
+
+              border: '1px solid #cbd5e1',
+
+              borderRadius: '8px',
+
+              outline: 'none',
+
+              fontSize: '15px',
+
+            }}
+
           />
 
         </div>
+
+
+        {/* PASSWORD */}
 
         <div
           style={{
@@ -168,7 +217,25 @@ router.replace("/");
           }}
         >
 
-          <label>Password</label>
+          <label
+            style={{
+
+              display: 'block',
+
+              marginBottom: '8px',
+
+              fontWeight: '600',
+
+              fontSize: '14px',
+
+              color: '#334155',
+
+            }}
+          >
+
+            Password
+
+          </label>
 
           <input
 
@@ -184,9 +251,34 @@ router.replace("/");
 
             onKeyDown={handleEnterKey}
 
+            style={{
+
+              width: '100%',
+
+              boxSizing: 'border-box',
+
+              padding: '12px 14px',
+
+              background: '#ffffff',
+
+              color: '#0f172a',
+
+              border: '1px solid #cbd5e1',
+
+              borderRadius: '8px',
+
+              outline: 'none',
+
+              fontSize: '15px',
+
+            }}
+
           />
 
         </div>
+
+
+        {/* LOGIN BUTTON */}
 
         <button
 
@@ -200,7 +292,22 @@ router.replace("/");
 
             width: '100%',
 
-            marginTop: '25px',
+            marginTop: '28px',
+
+            padding: '13px',
+
+            border: 'none',
+
+            borderRadius: '8px',
+
+            background:
+              'linear-gradient(135deg, #2563eb, #7c3aed)',
+
+            color: '#ffffff',
+
+            fontSize: '15px',
+
+            fontWeight: '600',
 
             opacity:
               loading ? 0.6 : 1,
