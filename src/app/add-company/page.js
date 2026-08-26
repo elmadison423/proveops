@@ -8,6 +8,8 @@ import {
   useRouter,
 } from 'next/navigation'
 
+import toast from 'react-hot-toast'
+
 import { supabase }
 from '../../lib/supabase'
 
@@ -67,19 +69,19 @@ export default function AddCompany() {
 
     if (!user) {
 
-      alert(
-        'No logged in user'
-      )
+      toast.error(
+  'No logged in user'
+)
 
       return
     }
 
     const {
-      data: profile,
-      error: profileError,
-    } = await supabase
-      .from("Meters")('Profiles')
-      .select('*')
+  data: profile,
+  error: profileError,
+} = await supabase
+  .from("Profiles")
+  .select("*")
       .eq(
         'user_id',
         user.id
@@ -91,9 +93,9 @@ export default function AddCompany() {
       !profile
     ) {
 
-      alert(
-        'Profile not found'
-      )
+      toast.error(
+  'Profile not found'
+)
 
       console.log(
         profileError
@@ -103,36 +105,33 @@ export default function AddCompany() {
     }
 
     const { error } =
-      await supabase
-        .from("Meters")('Organizations')
-        .insert([
-          {
-            name:
-              companyName,
+  await supabase
+    .from("Organizations")
+    .insert([
+      {
+        name:
+          companyName,
 
-            contact_email:
-              contactEmail,
+        contact_email:
+          contactEmail,
 
-            phone,
-
-            owner_id:
-              user.id,
-          },
-        ])
+        phone,
+      },
+    ])
 
     if (error) {
 
-      alert(
-        'Error saving company'
-      )
+     toast.error(
+  'Error saving company'
+)
 
       console.log(error)
 
     } else {
 
-      alert(
-        'Company added successfully'
-      )
+     toast.success(
+  'Company added successfully!'
+)
 
       router.push('/')
     }

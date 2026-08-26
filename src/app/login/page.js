@@ -20,37 +20,40 @@ export default function LoginPage() {
 
     setLoading(true)
 
-    const { error } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+  const {
+  data,
+  error,
+} = await supabase.auth.signInWithPassword({
 
-    if (error) {
+  email,
+  password,
 
-      toast.error("Invalid email or password.")
+});
 
-      setLoading(false)
+if (error) {
 
-      return
-    }
+  toast.error("Invalid email or password.");
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+  setLoading(false);
 
-    if (!session) {
+  return;
+}
 
-      toast.error("Unable to establish session.")
+if (!data?.session) {
 
-      setLoading(false)
+  toast.error(
+    "Unable to establish session."
+  );
 
-      return
-    }
+  setLoading(false);
 
-    toast.success("Welcome back!")
+  return;
+}
 
-    router.replace("/")
+toast.success("Welcome back!");
+
+window.location.replace("/");
+
   }
 
   function handleEnterKey(e) {
