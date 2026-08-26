@@ -16,6 +16,8 @@ from '../../../lib/supabase'
 import ProtectedRoute
 from '../../../components/ProtectedRoute'
 
+import toast from 'react-hot-toast'
+
 export default function EditTechnician() {
 
   const params =
@@ -96,38 +98,28 @@ export default function EditTechnician() {
 
   async function updateTechnician() {
 
-    const { error } =
-      await supabase
-        .from('Technicians')
-        .update({
-
-          name,
-
-          email,
-
-          phone,
-
-          role,
-        })
-
-        .eq(
-          'id',
-          technicianId
-        )
+    const { data, error } =
+  await supabase
+    .from('Technicians')
+    .update({
+      name,
+      email,
+      phone,
+      role,
+    })
+    .eq('id', technicianId)
+    .select()
+      
 
     if (error) {
 
       console.log(error)
 
-      alert(
-        'Error updating technician'
-      )
+      toast.error('Error updating technician')
 
     } else {
 
-      alert(
-        'Technician updated successfully'
-      )
+   toast.success('Technician updated successfully')   
 
       router.push(
         '/technician-dashboard'
@@ -153,7 +145,7 @@ export default function EditTechnician() {
               Name
             </label>
 
-            "Meters"
+            <input
               value={name}
               onChange={(e) =>
                 setName(
@@ -173,7 +165,7 @@ export default function EditTechnician() {
               Email
             </label>
 
-            "Meters"
+            <input
               value={email}
               onChange={(e) =>
                 setEmail(
@@ -188,24 +180,15 @@ export default function EditTechnician() {
           </div>
 
           <div>
+  <label>Phone</label>
 
-            <label>
-              Phone
-            </label>
-
-            "Meters"
-              value={phone}
-              onChange={(e) =>
-                setPhone(
-                  e.target.value
-                )
-              }
-              onKeyDown={
-                handleEnterKey
-              }
-            />
-
-          </div>
+  <input
+    type="text"
+    value={phone}
+    onChange={(e) => setPhone(e.target.value)}
+    onKeyDown={handleEnterKey}
+  />
+</div>
 
           <div>
 

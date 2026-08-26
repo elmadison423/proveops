@@ -152,7 +152,7 @@ export default function AddTechnician() {
               Name
             </label>
 
-            "Meters"
+            <input
               value={name}
               onChange={(e) =>
                 setName(
@@ -172,7 +172,7 @@ export default function AddTechnician() {
               Email
             </label>
 
-            "Meters"
+            <input
               value={email}
               onChange={(e) =>
                 setEmail(
@@ -192,17 +192,13 @@ export default function AddTechnician() {
               Phone
             </label>
 
-            "Meters"
-              value={phone}
-              onChange={(e) =>
-                setPhone(
-                  e.target.value
-                )
-              }
-              onKeyDown={
-                handleEnterKey
-              }
-            />
+            <input
+  value={phone}
+  onChange={(e) =>
+    setPhone(e.target.value)
+  }
+  onKeyDown={handleEnterKey}
+/>
 
           </div>
 

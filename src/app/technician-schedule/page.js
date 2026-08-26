@@ -1,183 +1,103 @@
 'use client'
 
-import {
-  useEffect,
-  useState,
-} from 'react'
-
-import { supabase }
-from '../../lib/supabase'
-
-import ProtectedRoute
-from '../../components/ProtectedRoute'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import ProtectedRoute from '@/components/ProtectedRoute'
 
 export default function TechnicianSchedule() {
 
-  const [meters, setMeters] =
-    useState([])
+  const [schedules, setSchedules] = useState([])
+const [loading, setLoading] = useState(true)
 
-  const [
-    technician,
-    setTechnician,
-  ] = useState(null)
+useEffect(() => {
+  loadSchedule()
+}, [])
 
-  const [search, setSearch] =
-    useState('')
+async function loadSchedule() {
 
-  useEffect(() => {
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
 
-    fetchSchedule()
+  if (!user) {
+    setLoading(false)
+    return
+  }
 
-  }, [])
-
-  async function fetchSchedule() {
-
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
-
-    if (!user) return
-
-    const {
-      data: profile,
-    } = await supabase
+  const { data: profile } =
+    await supabase
       .from('Profiles')
-      .select('*')
-      .eq(
-        'user_id',
-        user.id
-      )
+      .select('organization_id')
+      .eq('user_id', user.id)
       .single()
 
-    const {
-      data: tech,
-    } = await supabase
-      .from('Technicians')
-      .select('*')
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
-      .limit(1)
-      .single()
+      console.log("Organization ID:", profile?.organization_id)
 
-    setTechnician(tech)
-
-    if (!tech) return
-
-    const {
-      data: meterData,
-    } = await supabase
-      .from('Meters')
-      .select('*')
-      .eq(
-        'technician_id',
-        tech.id
-      )
-
-    setMeters(
-      meterData || []
+const { data: schedules, error } =
+  await supabase
+    .from('Schedules')
+    .select('*')
+    .eq(
+      'organization_id',
+      profile.organization_id
     )
-  }
-
-  function getNextProveDate(
-    meter
-  ) {
-
-    const lastProve =
-      new Date(
-        meter.last_prove_date
-      )
-
-    lastProve.setDate(
-      lastProve.getDate() +
-      meter.time_interval_days
+    .eq(
+      'status',
+      'Scheduled'
     )
+    .order('scheduled_date')
+    .order('scheduled_time')
 
-    return lastProve
-  }
+    const { data: meters } =
+  await supabase
+    .from('meters')
+    .select(`
+      id,
+      meter_id_tag,
+      location
+    `)
 
-  function getPriority(
-    meter
-  ) {
+    const { data: technicians } =
+  await supabase
+    .from('Technicians')
+    .select(`
+      id,
+      name
+    `)
 
-    const today =
-      new Date()
+ if (error) {
+  console.log("PROFILE =", profile)
+  console.log("USER =", user)
+  console.log("ERROR =", error)
+}
 
-    const nextWeek =
-      new Date()
+console.log("Schedules:", schedules)
+console.log("Technicians:", technicians)
 
-    nextWeek.setDate(
-      today.getDate() + 7
-    )
+ const combined =
+  (schedules || []).map(schedule => ({
 
-    const nextProve =
-      getNextProveDate(
-        meter
+    ...schedule,
+
+    meter:
+      meters?.find(
+        meter =>
+          meter.id === schedule.meter_id
+      ),
+
+    technician:
+      technicians?.find(
+        tech =>
+          tech.id === schedule.technician_id
       )
 
-    const volumeUsed =
+  }))
 
-      (meter.current_volume || 0)
+setSchedules(combined)
+  setLoading(false)
 
-      -
-
-      (meter.last_prove_volume || 0)
-
-    const volumeDue =
-
-      volumeUsed >=
-      (meter.volume_interval || 0)
-
-    if (
-      nextProve < today ||
-      volumeDue
-    ) {
-
-      return 'OVERDUE'
-    }
-
-    if (
-      nextProve <= nextWeek
-    ) {
-
-      return 'DUE_THIS_WEEK'
-    }
-
-    return 'UPCOMING'
-  }
-
-  const filteredMeters =
-
-    meters.filter(meter => {
-
-      return (
-
-        meter.name
-          ?.toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
-
-        ||
-
-        meter.location
-          ?.toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
-
-        ||
-
-        meter.meter_id_tag
-          ?.toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
-      )
-    })
+}
 
   return (
 
@@ -191,152 +111,150 @@ export default function TechnicianSchedule() {
 
         <br />
 
-        <h2>
+       <div className="card">
 
-          {
-            technician?.name
-          }
+  <h2>
+    Scheduled Jobs
+  </h2>
 
-        </h2>
+  <br />
 
-        <p>
+  {loading ? (
 
-          <strong>
-            Role:
-          </strong>
+    <p>Loading...</p>
 
-          {' '}
+  ) : schedules.length === 0 ? (
 
-          {
-            technician?.role || 'N/A'
-          }
+    <p>No scheduled jobs.</p>
 
-        </p>
+  ) : (
 
-        <br />
+   <div
+  style={{
+    display: "grid",
+    gap: "16px",
+    marginTop: "20px",
+  }}
+>
 
-        "Meters"
-          placeholder="Search schedule..."
-          value={search}
-          onChange={(e) =>
-            setSearch(
-              e.target.value
-            )
-          }
-        />
+  {schedules.map(schedule => (
 
-        <br />
-        <br />
+    <div
+      key={schedule.id}
+      className="card"
+      style={{
+        padding: "20px",
+      }}
+    >
 
-        <div className="cards">
+      <h3>
 
-          {
-            filteredMeters.length === 0
-            ? (
+        {schedule.meter?.meter_id_tag || "Unknown Meter"}
 
-              <p>
-                No assigned work
-              </p>
+      </h3>
 
-            ) : (
+      <p>
 
-              filteredMeters.map(
-                meter => {
+        📍 {schedule.meter?.location || "Unknown Location"}
 
-                  const priority =
-                    getPriority(
-                      meter
-                    )
+      </p>
 
-                  return (
+      <p>
 
-                    <div
-                      key={meter.id}
-                      className="card compact-card"
-                      style={{
+  👷 {schedule.technician?.name || "Unassigned"}
 
-                        width: '360px',
+</p>
 
-                        marginBottom:
-                          '10px',
+      <br />
 
-                        padding:
-                          '14px',
+ <p>
 
-                        background:
-                          'rgba(255,255,255,0.06)',
-                      }}
-                    >
+  📅 {new Date(
+    `${schedule.scheduled_date}T00:00:00`
+  ).toLocaleDateString(
+    "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }
+  )}
 
-                      <h2>
+</p>
 
-                        {
-                          meter.meter_id_tag
-                        }
+<p>
 
-                      </h2>
+  🕒 {schedule.scheduled_time
+    ? new Date(
+        `1970-01-01T${schedule.scheduled_time}`
+      ).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "No Time Assigned"}
 
-                      <p>
+</p>
 
-                        {
-                          meter.name
-                        }
+      <br />
 
-                      </p>
+      <p>
 
-                      <p>
+        Status: {schedule.status}
 
-                        {
-                          meter.location
-                        }
+      </p>
 
-                      </p>
+      <br />
 
-                      <br />
+<p>
 
-                      <div
-                        className={`status-badge ${
-                          priority === 'OVERDUE'
-                            ? 'status-overdue'
-                            : priority === 'DUE_THIS_WEEK'
-                            ? 'status-due'
-                            : 'status-ok'
-                        }`}
-                      >
+  <strong>📝 Notes</strong>
 
-                        {priority}
+</p>
 
-                      </div>
+<p>
 
-                      <br />
-                      <br />
+  {schedule.notes || "No notes"}
 
-                      <p>
+</p>
 
-                        Due:
+<br />
 
-                        {' '}
+<div
+  style={{
+    display: "flex",
+    gap: "12px",
+    marginTop: "15px",
+  }}
+>
 
-                        {
-                          getNextProveDate(
-                            meter
-                          )
-                          .toLocaleDateString()
-                        }
+  <Link
+  href={`/log-prove?id=${schedule.meter_id}&schedule=${schedule.id}`}
+>
 
-                      </p>
+  <button>
 
-                    </div>
-                  )
-                }
-              )
-            )
-          }
+    ▶ Start Prove
 
-        </div>
+  </button>
+
+</Link>
+
+</div>
+
+    </div>
+
+  ))}
+
+</div>
+
+  )}
+
+</div>
 
       </div>
 
     </ProtectedRoute>
+
   )
+
 }

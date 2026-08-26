@@ -1,20 +1,22 @@
 'use client'
 
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
-import toast
-from 'react-hot-toast'
-
-import { supabase }
-from '../../lib/supabase'
-
-import ProtectedRoute
-from '../../components/ProtectedRoute'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import { supabase } from '@/lib/supabase'
 
 export default function SettingsPage() {
+
+  const router = useRouter()
+
+  // ===========================
+  // State
+  // ===========================
+
+  const [loading, setLoading] =
+    useState(true)
 
   const [organization, setOrganization] =
     useState(null)
@@ -23,259 +25,430 @@ export default function SettingsPage() {
     useState(null)
 
   const [name, setName] =
-    useState('')
+    useState("")
 
   const [email, setEmail] =
-    useState('')
+    useState("")
 
   const [phone, setPhone] =
-    useState('')
+    useState("")
 
-  const [
-    dispatchRegion,
-    setDispatchRegion,
-  ] = useState('')
+  const [dispatchRegion, setDispatchRegion] =
+    useState("")
 
   const [theme, setTheme] =
-    useState('midnight')
+    useState("midnight")
 
- useEffect(() => {
-  document.body.classList.remove(
-    "theme-carbon",
-    "theme-emerald"
-  )
+  // ===========================
+  // Load Settings
+  // ===========================
 
-  if (theme === "carbon") {
-    document.body.classList.add("theme-carbon")
-  }
+  useEffect(() => {
 
-  if (theme === "emerald") {
-    document.body.classList.add("theme-emerald")
-  }
+    loadSettings()
 
-  localStorage.setItem("proveops-theme", theme)
-}, [theme])
+  }, [])
 
-useEffect(() => {
-  const savedTheme =
-    localStorage.getItem("proveops-theme")
+  useEffect(() => {
 
-  if (savedTheme) {
-    setTheme(savedTheme)
-  }
-}, [])
+    document.body.classList.remove(
+      "theme-carbon",
+      "theme-emerald"
+    )
 
- useEffect(() => {
-  fetchSettings()
-}, [])
+    if (theme === "carbon") {
 
-  async function fetchSettings() {
-
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
-
-    if (!user) return
-
-    const {
-      data: profileData,
-    } = await supabase
-      .from('Profiles')
-      .select('*')
-      .eq(
-        'user_id',
-        user.id
+      document.body.classList.add(
+        "theme-carbon"
       )
-      .single()
 
-    setProfile(profileData)
+    }
 
-    setTheme(
-      profileData?.theme ||
-      'midnight'
-    )
+    if (theme === "emerald") {
 
-    const {
-      data: org,
-    } = await supabase
-      .from('Organizations')
-      .select('*')
-      .eq(
-        'id',
-        profileData.organization_id
+      document.body.classList.add(
+        "theme-emerald"
       )
-      .single()
 
-    if (!org) return
+    }
 
-    setOrganization(org)
-
-    setName(org.name || '')
-
-    setEmail(
-      org.contact_email || ''
+    localStorage.setItem(
+      "proveops-theme",
+      theme
     )
 
-    setPhone(
-      org.phone || ''
-    )
+  }, [theme])
 
-    setDispatchRegion(
-      org.dispatch_region || ''
-    )
+  async function loadSettings() {
+
+    try {
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) return
+
+      const {
+        data: profileData,
+        error: profileError,
+      } = await supabase
+        .from("Profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single()
+
+      if (profileError)
+        throw profileError
+
+      setProfile(profileData)
+
+      const {
+        data: orgData,
+        error: orgError,
+      } = await supabase
+        .from("Organizations")
+        .select("*")
+        .eq(
+          "id",
+          profileData.organization_id
+        )
+        .single()
+
+      if (orgError)
+        throw orgError
+
+      setOrganization(orgData)
+
+      setName(
+        orgData.name || ""
+      )
+
+      setEmail(
+        orgData.contact_email || ""
+      )
+
+      setPhone(
+        orgData.phone || ""
+      )
+
+      setDispatchRegion(
+        orgData.dispatch_region || ""
+      )
+
+      setTheme(
+        profileData.theme ||
+        "midnight"
+      )
+
+    }
+
+    catch (err) {
+
+      console.error(err)
+
+      toast.error(
+        "Unable to load settings."
+      )
+
+    }
+
+    finally {
+
+      setLoading(false)
+
+    }
+
   }
+
+   // ===========================
+  // Save Settings
+  // ===========================
 
   async function saveSettings() {
 
-    if (!organization) return
+    if (!organization || !profile)
+      return
 
-    const { error } =
-      await supabase
-        .from('Organizations')
+    try {
+
+      const { error } =
+        await supabase
+          .from("Organizations")
+          .update({
+
+            name,
+
+            contact_email: email,
+
+            phone,
+
+            dispatch_region:
+              dispatchRegion,
+
+          })
+          .eq(
+            "id",
+            organization.id
+          )
+
+      if (error)
+        throw error
+
+      const {
+        error: profileError,
+      } = await supabase
+        .from("Profiles")
         .update({
-
-          name,
-
-          contact_email:
-            email,
-
-          phone,
-
-          dispatch_region:
-            dispatchRegion,
+          theme,
         })
-
         .eq(
-          'id',
-          organization.id
+          "id",
+          profile.id
         )
 
-    const {
-      error: profileError,
-    } = await supabase
-      .from('Profiles')
-      .update({
-
-        theme,
-      })
-
-      .eq(
-        'id',
-        profile.id
-      )
-
-    if (
-      error ||
-      profileError
-    ) {
-
-      toast.error(
-        'Error saving settings'
-      )
-
-    } else {
-
-      localStorage.setItem(
-        'proveops-theme',
-        theme
-      )
+      if (profileError)
+        throw profileError
 
       toast.success(
-        'Settings updated'
+        "Settings saved successfully!"
       )
 
-      window.location.reload()
     }
+
+    catch (err) {
+
+      console.error(err)
+
+      toast.error(
+        "Unable to save settings."
+      )
+
+    }
+
   }
+
+  // ===========================
+  // Loading Screen
+  // ===========================
+
+  if (loading) {
+
+    return (
+
+      <ProtectedRoute>
+
+        <div className="container">
+
+          <h2>
+            Loading Settings...
+          </h2>
+
+        </div>
+
+      </ProtectedRoute>
+
+    )
+
+  }
+
+  // ===========================
+  // UI
+  // ===========================
 
   return (
 
     <ProtectedRoute>
 
-      <div className="container">
+      <div
+        style={{
+          padding: "40px",
+          maxWidth: "1100px",
+          margin: "0 auto",
+        }}
+      >
 
-        <h1>
-          Settings
-        </h1>
+        <div
+          style={{
+            marginBottom: "40px",
+          }}
+        >
 
-        <br />
+          <h1
+            style={{
+              fontSize: "2.6rem",
+              marginBottom: "8px",
+            }}
+          >
+            Organization Settings
+          </h1>
+
+          <p
+            style={{
+              color: "#6b7280",
+            }}
+          >
+            Manage your organization, branding and preferences.
+          </p>
+
+        </div>
+
+        {/* Company Information */}
 
         <div
           className="card"
           style={{
-            maxWidth:
-              '700px',
+            padding: "30px",
+            marginBottom: "30px",
           }}
         >
 
-          <h2>
-            Organization Settings
+          <h2
+            style={{
+              marginTop: 0,
+            }}
+          >
+            🏢 Company Information
           </h2>
 
-          <br />
+          <p
+            style={{
+              color: "#6b7280",
+              marginBottom: "25px",
+            }}
+          >
+            Update your organization details.
+          </p>
 
-          <label>
-            Company Name
-          </label>
+          <label>Company Name</label>
 
-          "Meters"
+          <input
             value={name}
             onChange={(e) =>
-              setName(
-                e.target.value
-              )
+              setName(e.target.value)
             }
+            placeholder="Company Name"
+            style={{
+              marginBottom: "20px",
+            }}
           />
 
-          <label>
-            Contact Email
-          </label>
+          <label>Contact Email</label>
 
-          "Meters"
+          <input
             value={email}
             onChange={(e) =>
-              setEmail(
-                e.target.value
-              )
+              setEmail(e.target.value)
             }
+            placeholder="Email Address"
+            style={{
+              marginBottom: "20px",
+            }}
           />
 
-          <label>
-            Phone
-          </label>
+          <label>Phone Number</label>
 
-          "Meters"
+          <input
             value={phone}
             onChange={(e) =>
-              setPhone(
-                e.target.value
-              )
+              setPhone(e.target.value)
             }
+            placeholder="Phone Number"
+            style={{
+              marginBottom: "20px",
+            }}
           />
 
-          <label>
-            Dispatch Region
-          </label>
+          <label>Dispatch Region</label>
 
-          "Meters"
+          <input
             value={dispatchRegion}
             onChange={(e) =>
               setDispatchRegion(
                 e.target.value
               )
             }
+            placeholder="Permian Basin"
+            style={{
+              marginBottom: "30px",
+            }}
           />
 
-          <br />
-          <br />
+          <button
+            onClick={saveSettings}
+            className="primary-button"
+          >
+            Save Changes
+          </button>
 
-          <h2>
-            Theme Preferences
+        </div>
+
+        {/* Users */}
+
+        <div
+          className="card"
+          style={{
+            padding: "30px",
+            marginBottom: "30px",
+          }}
+        >
+
+          <h2
+            style={{
+              marginTop: 0,
+            }}
+          >
+            👥 Organization Users
           </h2>
 
+          <p
+            style={{
+              color: "#6b7280",
+              marginBottom: "20px",
+            }}
+          >
+            Invite users and manage permissions.
+          </p>
+
+          <button
+            onClick={() =>
+              router.push("/users")
+            }
+          >
+            Manage Users →
+          </button>
+
+        </div>
+
+        {/* Appearance */}
+
+        <div
+          className="card"
+          style={{
+            padding: "30px",
+            marginBottom: "30px",
+          }}
+        >
+
+          <h2
+            style={{
+              marginTop: 0,
+            }}
+          >
+            🎨 Appearance
+          </h2>
+
+          <p
+            style={{
+              color: "#6b7280",
+            }}
+          >
+            Customize the look and feel of ProveOps.
+          </p>
+
           <br />
+
+          <label>Theme</label>
 
           <select
             value={theme}
@@ -300,21 +473,67 @@ useEffect(() => {
 
           </select>
 
-          <button
-            type="button"
-            onClick={
-              saveSettings
-            }
+        </div>
+
+        {/* Notifications */}
+
+        <div
+          className="card"
+          style={{
+            padding: "30px",
+            marginBottom: "30px",
+          }}
+        >
+
+          <h2
+            style={{
+              marginTop: 0,
+            }}
           >
+            🔔 Notifications
+          </h2>
 
-            Save Settings
-
-          </button>
+          <p
+            style={{
+              color: "#6b7280",
+            }}
+          >
+            Monthly due reports, technician alerts, dispatch emails and customer reminders will be configurable here in Version 1.0.
+          </p>
 
         </div>
 
-      </div>
+        {/* Security */}
+
+        <div
+          className="card"
+          style={{
+            padding: "30px",
+          }}
+        >
+
+          <h2
+            style={{
+              marginTop: 0,
+            }}
+          >
+            🔒 Security
+          </h2>
+
+          <p
+            style={{
+              color: "#6b7280",
+            }}
+          >
+            Password management, two-factor authentication and API access will be added here.
+          </p>
+
+        </div>
+
+        </div>
 
     </ProtectedRoute>
+
   )
+
 }

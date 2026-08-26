@@ -1,15 +1,9 @@
 'use client'
 
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
-import { useRouter }
-from 'next/navigation'
-
-import { supabase }
-from '../lib/supabase'
+import { useOrganization } from '../context/OrganizationContext'
 
 export default function ProtectedRoute({
   children,
@@ -17,34 +11,41 @@ export default function ProtectedRoute({
 
   const router = useRouter()
 
-  const [loading, setLoading] =
-    useState(true)
+  const {
+    user,
+    loading,
+  } = useOrganization()
 
   useEffect(() => {
 
-    checkUser()
+    if (!loading && !user) {
 
-  }, [])
+      router.replace('/login')
 
-  async function checkUser() {
-
-    const {
-      data,
-    } = await supabase.auth.getSession()
-
-    if (!data.session) {
-
-      router.push('/login')
-
-    } else {
-
-      setLoading(false)
     }
-  }
+
+  }, [user, loading, router])
 
   if (loading) {
 
-    return <p>Loading...</p>
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          fontSize: "18px",
+        }}
+      >
+        Loading...
+      </div>
+    )
+  }
+
+  if (!user) {
+
+    return null
   }
 
   return children

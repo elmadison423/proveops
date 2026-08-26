@@ -1,205 +1,163 @@
-import { Resend } from 'resend'
+import { createClient } from "@supabase/supabase-js"
 
-import jsPDF from 'jspdf'
+import { getDueMeters } from "@/lib/reports/getDueMeters"
+import { generateMonthlyPdf } from "@/lib/reports/generateMonthlyPdf"
+import { sendMonthlyEmail } from "@/lib/reports/sendMonthlyEmail"
 
-import { createClient }
-from '@supabase/supabase-js'
-
-const resend = new Resend(
-  process.env.RESEND_API_KEY
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-const supabase =
-  createClient(
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
 
-    process.env
-      .NEXT_PUBLIC_SUPABASE_URL,
-
-    process.env
-      .SUPABASE_SERVICE_ROLE_KEY
+if (
+  searchParams.get("secret") !==
+  process.env.MONTHLY_REPORT_SECRET
+) {
+  return Response.json(
+    {
+      error: "Unauthorized",
+    },
+    {
+      status: 401,
+    }
   )
+}
 
-export async function GET() {
+const force =
+  searchParams.get("force") === "true"
 
-  console.log("MONTHLY REPORT JOB STARTED")
+const today = new Date()
+
+const firstDayNextMonth = new Date(
+  today.getFullYear(),
+  today.getMonth() + 1,
+  1
+)
+
+const sendDay = new Date(firstDayNextMonth)
+sendDay.setDate(sendDay.getDate() - 7)
+
+today.setHours(0, 0, 0, 0)
+sendDay.setHours(0, 0, 0, 0)
+
+if (
+  !force &&
+  today.getTime() !== sendDay.getTime()
+) {
+
+  console.log("Not scheduled send day.")
+
+  return Response.json({
+    success: true,
+    skipped: true,
+    reason: "Not scheduled send day",
+  })
+
+}
+
+  console.log("Monthly Report Job Started")
 
   try {
 
-    const {
-      data: organizations,
-    } = await supabase
-      .from('Organizations')
-      .select('*')
+    const { data: organizations, error } =
+      await supabase
+        .from("Organizations")
+        .select("*")
 
-    for (
-      const org
-      of organizations || []
-    ) {
+    if (error) throw error
 
-      const {
-        data: meters,
-      } = await supabase
-        .from('Meters')
-        .select('*')
-        .eq(
-          'organization_id',
-          org.id
+    let emailsSent = 0
+
+    for (const organization of organizations) {
+const reportMonth = `${firstDayNextMonth.getFullYear()}-${String(
+  firstDayNextMonth.getMonth() + 1
+).padStart(2, "0")}`
+
+const { data: existingLog } =
+  await supabase
+    .from("MonthlyReportLog")
+    .select("id")
+    .eq("organization_id", organization.id)
+    .eq("report_month", reportMonth)
+    .maybeSingle()
+
+if (existingLog) {
+
+  console.log(
+    `Monthly report already sent to ${organization.name}`
+  )
+
+  continue
+}
+
+      const meters =
+        await getDueMeters(
+          organization.id
         )
 
-      const doc =
-        new jsPDF()
+      if (meters.length === 0) {
 
-      doc.setFontSize(20)
+        console.log(
+          `No meters due for ${organization.name}`
+        )
 
-      doc.text(
-        org.name,
-        20,
-        20
-      )
+        continue
+      }
 
-      doc.setFontSize(16)
+      const pdf =
+        generateMonthlyPdf(
+          organization,
+          meters
+        )
 
-      doc.text(
-        'Upcoming Meter Schedule',
-        20,
-        35
-      )
+    await sendMonthlyEmail(
+  organization,
+  pdf
+)
 
-      let y = 55
-
-      let html = `
-        <h1>${org.name}</h1>
-        <h2>Upcoming Meter Schedule</h2>
-        <ul>
-      `
-const today = new Date()
-
-const nextMonthStart =
-  new Date(
-    today.getFullYear(),
-    today.getMonth() + 1,
-    1
-  )
-
-const nextMonthEnd =
-  new Date(
-    today.getFullYear(),
-    today.getMonth() + 2,
-    0
-  )
-
-const upcomingMeters =
-  (meters || []).filter(meter => {
-
-    const nextDate =
-      new Date(
-        meter.last_prove_date
-      )
-
-    nextDate.setDate(
-      nextDate.getDate()
-      +
-      meter.time_interval_days
-    )
-
-    return (
-      nextDate >= nextMonthStart &&
-      nextDate <= nextMonthEnd
-    )
+await supabase
+  .from("MonthlyReportLog")
+  .insert({
+    organization_id: organization.id,
+    report_month: reportMonth,
   })
 
-      upcomingMeters
-  .forEach(meter => {
+emailsSent++
 
-          const nextDate =
-            new Date(
-              meter.last_prove_date
-            )
+      console.log(
+        `Email sent to ${organization.name}`
+      )
 
-          nextDate.setDate(
-
-            nextDate.getDate()
-            +
-            meter.time_interval_days
-          )
-
-         doc.text(
-  `${meter.name}`,
-  20,
-  y
-)
-
-doc.text(
-  `${meter.location}`,
-  90,
-  y
-)
-
-doc.text(
-  `${nextDate.toLocaleDateString()}`,
-  160,
-  y
-)
-
-          y += 12
-
-          html += `
-            <li>
-              ${meter.name}
-              —
-              ${meter.location}
-              —
-              Due:
-              ${nextDate.toLocaleDateString()}
-            </li>
-          `
-        })
-
-      html += '</ul>'
-
-      await resend.emails.send({
-
-        from:
-          'ProveOps <onboarding@resend.dev>',
-
-        to:
-          'elmadison423@gmail.com',
-
-        subject:
-          `${org.name} Upcoming Meter Schedule`,
-
-        html,
-
-        attachments: [
-
-          {
-            filename:
-              'meter-schedule.pdf',
-
-            content:
-              Buffer.from(
-                doc.output('arraybuffer')
-              ).toString('base64'),
-          },
-        ],
-      })
     }
 
     return Response.json({
 
       success: true,
+
+      organizations:
+        organizations.length,
+
+      emailsSent,
+
     })
 
-  } catch (error) {
+  }
 
-    console.log(error)
+  catch (error) {
+
+    console.error(error)
 
     return Response.json({
 
       success: false,
 
-      error:
-        error.message,
+      error: error.message,
+
     })
+
   }
+
 }

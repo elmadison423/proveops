@@ -1,67 +1,63 @@
 'use client'
 
-import {
-  useState,
-} from 'react'
-
-import {
-  useRouter,
-} from 'next/navigation'
-
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
-import { supabase }
-from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 export default function LoginPage() {
 
-  const router =
-    useRouter()
+  const router = useRouter()
 
-  const [email, setEmail] =
-    useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const [
-    password,
-    setPassword,
-  ] = useState('')
+ async function login() {
 
-  async function login() {
+  if (loading) return;
 
-    const { error } =
-      await supabase.auth
-        .signInWithPassword({
+  setLoading(true);
 
-          email,
+  const { error } =
+    await supabase.auth.signInWithPassword({
 
-          password,
-        })
+      email,
+      password,
 
-    if (error) {
+    });
 
-      toast.error(
-        'Invalid login credentials'
-      )
+  if (error) {
 
-    } else {
+    toast.error("Invalid email or password.");
 
-      toast.success(
-        'Login successful'
-      )
+    setLoading(false);
 
-      router.push('/')
-    }
+    return;
   }
 
-  function handleEnterKey(
-    e
-  ) {
+ const {
+  data: { session },
+} = await supabase.auth.getSession();
 
-    if (
-      e.key === 'Enter'
-    ) {
+if (!session) {
+  toast.error("Unable to establish session.");
+  setLoading(false);
+  return;
+}
+
+toast.success("Welcome back!");
+
+router.replace("/");
+}
+
+  function handleEnterKey(e) {
+
+    if (e.key === 'Enter') {
 
       login()
+
     }
   }
 
@@ -74,16 +70,15 @@ export default function LoginPage() {
 
         display: 'flex',
 
-        justifyContent:
-          'center',
+        justifyContent: 'center',
 
-        alignItems:
-          'center',
+        alignItems: 'center',
 
         background:
           'linear-gradient(135deg,#0f172a,#1e293b,#312e81)',
 
         padding: '20px',
+
       }}
     >
 
@@ -103,13 +98,13 @@ export default function LoginPage() {
           backdropFilter:
             'blur(18px)',
 
-          borderRadius:
-            '24px',
+          borderRadius: '24px',
 
           padding: '40px',
 
           boxShadow:
             '0 20px 40px rgba(0,0,0,0.35)',
+
         }}
       >
 
@@ -118,10 +113,10 @@ export default function LoginPage() {
 
             textAlign: 'center',
 
-            marginBottom:
-              '10px',
+            marginBottom: '10px',
 
             fontSize: '2.5rem',
+
           }}
         >
 
@@ -136,8 +131,8 @@ export default function LoginPage() {
 
             opacity: 0.7,
 
-            marginBottom:
-              '35px',
+            marginBottom: '35px',
+
           }}
         >
 
@@ -147,61 +142,88 @@ export default function LoginPage() {
 
         <div>
 
-          <label>
-            Email
-          </label>
+          <label>Email</label>
 
           <input
+
             type="email"
-            value={email}
-            onChange={(e) =>
-              setEmail(
-                e.target.value
-              )
-            }
-            onKeyDown={
-              handleEnterKey
-            }
+
             placeholder="Enter email"
+
+            value={email}
+
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+
+            onKeyDown={handleEnterKey}
+
           />
 
         </div>
 
-        <div>
+        <div
+          style={{
+            marginTop: '20px',
+          }}
+        >
 
-          <label>
-            Password
-          </label>
+          <label>Password</label>
 
           <input
+
             type="password"
-            value={password}
-            onChange={(e) =>
-              setPassword(
-                e.target.value
-              )
-            }
-           onKeyDown={handleEnterKey}
+
             placeholder="Enter password"
+
+            value={password}
+
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
+
+            onKeyDown={handleEnterKey}
+
           />
 
         </div>
 
         <button
+
           type="button"
+
           onClick={login}
+
+          disabled={loading}
+
           style={{
+
             width: '100%',
-            marginTop: '10px',
+
+            marginTop: '25px',
+
+            opacity:
+              loading ? 0.6 : 1,
+
+            cursor:
+              loading
+                ? 'not-allowed'
+                : 'pointer',
+
           }}
+
         >
 
-          Login
+          {loading
+            ? 'Signing In...'
+            : 'Login'}
 
         </button>
 
       </div>
 
     </div>
+
   )
+
 }

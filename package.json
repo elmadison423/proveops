@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/interaction": "^6.1.21",
+    "@fullcalendar/react": "^6.1.21",
     "@supabase/supabase-js": "^2.105.3",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
@@ -18,12 +21,14 @@
     "react-countup": "^6.5.3",
     "react-dom": "19.2.4",
     "react-hot-toast": "^2.6.0",
+    "react-icons": "^5.7.0",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.8.1",
     "resend": "^6.12.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.4",
+    "@types/react": "19.2.17",
     "autoprefixer": "^10.5.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",

@@ -1,867 +1,297 @@
 'use client'
 
-import {
-  useEffect,
-  useState,
-} from 'react'
+import { useEffect, useState } from 'react'
 
-import Link from 'next/link'
+import CriticalAlerts from '../components/dashboard/CriticalAlerts'
 
-import CountUp from 'react-countup'
+import RecentActivity from '../components/dashboard/RecentActivity'
 
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { useRouter } from "next/navigation";
 
-import { supabase }
-from '../lib/supabase'
+import UpcomingDueMeters from '../components/dashboard/UpcomingDueMeters'
 
-import ProtectedRoute
-from '../components/ProtectedRoute'
+import ProtectedRoute from '../components/ProtectedRoute'
+
+import DispatchQueue from '../components/dashboard/DispatchQueue'
+
+import { fetchDashboardData } from '../lib/dashboardQueries'
+
+import { useOrganization } from "../context/OrganizationContext";
+
+import KPICards from '../components/dashboard/KPICards'
+import MeterStatusChart from '../components/dashboard/MeterStatusChart'
+import MeterTypeChart from '../components/dashboard/MeterTypeChart'
 
 export default function Dashboard() {
+
+  const router = useRouter();
+
+const greeting = () => {
+
+  const hour = new Date().getHours();
+
+  if (hour < 12)
+    return "Good Morning";
+
+  if (hour < 18)
+    return "Good Afternoon";
+
+  return "Good Evening";
+
+};
+
+const today = new Date().toLocaleDateString(
+  "en-US",
+  {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }
+);
+
+  const {
+  user,
+  profile,
+  organization,
+  loading: organizationLoading,
+} = useOrganization();
+
+  const [loading, setLoading] = useState(true)
 
   const [meters, setMeters] =
     useState([])
 
-  const [
-    technicians,
-    setTechnicians,
-  ] = useState([])
+  const [technicians, setTechnicians] =
+    useState([])
 
-  const [
-    proveHistory,
-    setProveHistory,
-  ] = useState([])
+  const [proveHistory, setProveHistory] =
+    useState([])
 
-  const [
-    organization,
-    setOrganization,
-  ] = useState(null)
+ useEffect(() => {
 
-  const [
-    recentActivity,
-    setRecentActivity,
-  ] = useState([])
+  if (organizationLoading) return;
 
-  useEffect(() => {
+  if (!organization?.id) {
+    setLoading(false);
+    return;
+  }
 
-    fetchDashboard()
+  loadDashboard();
 
-  }, [])
+}, [organization, organizationLoading]);
 
-  async function fetchDashboard() {
+  async function loadDashboard() {
 
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
+   const data = await fetchDashboardData(
+  organization?.id
+)
 
-    if (!user) return
+    if (!data) {
 
-    const {
-      data: profile,
-    } = await supabase
-      .from("Profiles")
-      .select('*')
-      .eq(
-        'user_id',
-        user.id
-      )
-      .single()
+      setLoading(false)
 
-  const {
-  data: org,
-} = await supabase
-  .from("Organizations")
-  .select("*")
-  .limit(1)
+      return
 
-    setOrganization(
-      org?.[0]
-    )
-
-    const {
-  data: meterData,
-} = await supabase
-  .from("meters")
-  .select("*")
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
-
-    const {
-      data: technicianData,
-    } = await supabase
-      .from("Technicians")
-      .select('*')
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
-
-    const {
-      data: proveData,
-    } = await supabase
-      .from("ProveHistory")
-      .select('*')
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
+    }
 
     setMeters(
-      meterData || []
+      data.meters
     )
 
     setTechnicians(
-      technicianData || []
+      data.technicians
     )
 
     setProveHistory(
-      proveData || []
+      data.proveHistory
     )
 
-    const recent =
+    setLoading(false)
 
-      (proveData || [])
-
-        .slice(-5)
-
-        .reverse()
-
-        .map(prove => {
-
-          const meter =
-            meterData?.find(
-
-              m =>
-
-                String(m.id)
-                ===
-                String(
-                  prove.meter_id
-                )
-            )
-
-          return {
-
-            id: prove.id,
-
-            text:
-
-              `${meter?.meter_id_tag || 'Unknown'} proved successfully`,
-
-            date:
-              prove.prove_date,
-          }
-        })
-
-    setRecentActivity(
-      recent
-    )
   }
 
-  function getNextProveDate(
-    meter
-  ) {
+  if (organizationLoading || loading) {
 
-    const lastProve =
-      new Date(
-        meter.last_prove_date
-      )
-
-    lastProve.setDate(
-      lastProve.getDate() +
-      meter.time_interval_days
-    )
-
-    return lastProve
-  }
-
-  function getStatus(meter) {
-
-  const today = new Date()
-
-  const nextDue =
-    meter.next_due_date
-      ? new Date(meter.next_due_date)
-      : null
-
-  if (!nextDue)
-    return "GOOD"
-
-  const daysUntilDue =
-    Math.floor(
-      (
-        nextDue.getTime() -
-        today.getTime()
-      ) /
-      (1000 * 60 * 60 * 24)
-    )
-
-  if (daysUntilDue < 0)
-    return "OVERDUE"
-
-  if (daysUntilDue <= 7)
-    return "CRITICAL"
-
-  if (daysUntilDue <= 14)
-    return "DUE SOON"
-
-  return "GOOD"
-}
-
-  function isDueThisWeek(
-    meter
-  ) {
-
-    const today =
-      new Date()
-
-    const nextWeek =
-      new Date()
-
-    nextWeek.setDate(
-      today.getDate() + 7
-    )
-
-    const nextProve =
-      getNextProveDate(
-        meter
-      )
-
-    return (
-      nextProve >= today
-      &&
-      nextProve <= nextWeek
-    )
-  }
-
-  const overdueMeters =
-    meters.filter(
-
-      meter =>
-
-        getStatus(
-          meter
-        )
-        === 'DUE'
-    )
-
-  const okMeters =
-    meters.filter(
-
-      meter =>
-
-        getStatus(
-          meter
-        )
-        === 'OK'
-    )
-
-  const dueThisWeek =
-    meters.filter(
-
-      meter =>
-
-        isDueThisWeek(
-          meter
-        )
-    )
-
-  const statusData = [
-
-    {
-      name: 'OK',
-      value: okMeters.length,
-    },
-
-    {
-      name: 'Due',
-      value: overdueMeters.length,
-    },
-  ]
-
-  const meterTypeData = [
-
-    {
-      type: 'Coriolis',
-
-      count:
-
-        meters.filter(
-
-          m =>
-
-            m.meter_type
-            === 'Coriolis'
-        ).length,
-    },
-
-    {
-      type: 'Turbine',
-
-      count:
-
-        meters.filter(
-
-          m =>
-
-            m.meter_type
-            === 'Turbine'
-        ).length,
-    },
-
-    {
-      type:
-        'Positive Displacement',
-
-      count:
-
-        meters.filter(
-
-          m =>
-
-            m.meter_type
-            ===
-            'Positive Displacement'
-        ).length,
-    },
-  ]
-
-const dueMeters = meters
-  .filter(
-    meter => meter.next_due_date
-  )
-  .sort(
-    (a, b) =>
-      new Date(a.next_due_date) -
-      new Date(b.next_due_date)
-  )
-  .slice(0, 10)
   return (
 
     <ProtectedRoute>
 
       <div className="container">
 
-        <h1>
+        <h2>
+          Loading Dashboard...
+        </h2>
 
-          {
-            organization?.name ||
-            'ProveOps Dashboard'
-          }
+      </div>
 
-        </h1>
+    </ProtectedRoute>
 
-        <br />
+  )
+}
 
-       <div className="cards">
+  return (
 
-  <Link href="/meters">
+    <ProtectedRoute>
 
-    <div className="card kpi-card">
-
-      <small className="kpi-label">
-        Total Meters
-      </small>
-
-      <h1 className="kpi-number">
-
-        <CountUp
-          end={meters.length}
-          duration={1.5}
-        />
-
-      </h1>
-
-      <small className="kpi-trend">
-        Active asset base
-      </small>
-
-    </div>
-
-  </Link>
-
-  <Link href="/meters?status=DUE">
-
-    <div className="card kpi-card kpi-overdue">
-
-      <small className="kpi-label">
-        Overdue Meters
-      </small>
-
-      <h1
-        className="kpi-number"
-        style={{
-          color: '#f87171',
-        }}
-      >
-
-        <CountUp
-          end={overdueMeters.length}
-          duration={1.5}
-        />
-
-      </h1>
-
-      <small className="kpi-trend">
-        Immediate attention required
-      </small>
-
-    </div>
-
-  </Link>
-
-  <Link href="/dispatch-board">
-
-    <div className="card kpi-card kpi-warning">
-
-      <small className="kpi-label">
-        Due This Week
-      </small>
-
-      <h1
-        className="kpi-number"
-        style={{
-          color: '#fbbf24',
-        }}
-      >
-
-        <CountUp
-          end={dueThisWeek.length}
-          duration={1.5}
-        />
-
-      </h1>
-
-      <small className="kpi-trend">
-        Upcoming proving workload
-      </small>
-
-    </div>
-
-  </Link>
-
-  <Link href="/technician-dashboard">
-
-    <div className="card kpi-card kpi-success">
-
-      <small className="kpi-label">
-        Technicians
-      </small>
-
-      <h1 className="kpi-number">
-
-        <CountUp
-          end={technicians.length}
-          duration={1.5}
-        />
-
-      </h1>
-
-      <small className="kpi-trend">
-        Active field personnel
-      </small>
-
-    </div>
-
-  </Link>
-
-  <Link href="/history">
-
-    <div className="card kpi-card kpi-info">
-
-      <small className="kpi-label">
-        Total Proves
-      </small>
-
-      <h1 className="kpi-number">
-
-        <CountUp
-          end={proveHistory.length}
-          duration={1.5}
-        />
-
-      </h1>
-
-      <small className="kpi-trend">
-        Historical prove records
-      </small>
-
-    </div>
-
-  </Link>
-
-</div>
-
-        <br />
-        <br />
-
-        <div className="cards">
-
-          <div
-            className="card"
-            style={{
-  width: '500px',
-  height: '350px',
-}}
-          >
-
-            <h2>
-              Meter Status
-            </h2>
-
-<ResponsiveContainer
-  width="100%"
-  height={260}
-  >
-
-              <PieChart>
-
-  <Pie
-    data={statusData}
-    dataKey="value"
-    nameKey="name"
-    outerRadius={110}
-    innerRadius={65}
-    paddingAngle={4}
-  >
-
-    <Cell fill="#34d399" />
-
-    <Cell fill="#f87171" />
-
-  </Pie>
-
-  <Tooltip />
-
-  <text
-    x="50%"
-    y="48%"
-    textAnchor="middle"
-    dominantBaseline="middle"
-    fill="white"
-    fontSize="28"
-    fontWeight="700"
-  >
-    {meters.length}
-  </text>
-
-  <text
-    x="50%"
-    y="58%"
-    textAnchor="middle"
-    dominantBaseline="middle"
-    fill="rgba(255,255,255,0.6)"
-    fontSize="14"
-  >
-    Total Meters
-  </text>
-
-</PieChart>
-
-            </ResponsiveContainer>
-
-          </div>
-
-          <div
-            className="card"
-            style={{
-              width: '500px',
-              height: '300px',
-            }}
-          >
-
-            <h2>
-              Meter Types
-            </h2>
-
- <ResponsiveContainer
-  width="100%"
-  height={260}
->
-
-          <BarChart
-  data={meterTypeData}
-  margin={{
-    top: 20,
-    right: 20,
-    left: 0,
-    bottom: 20,
-  }}
->
-
-  <XAxis
-    dataKey="type"
-    stroke="rgba(255,255,255,0.5)"
-    tick={{
-      fill: 'rgba(255,255,255,0.6)',
-      fontSize: 13,
-    }}
-  />
-
-  <YAxis
-    stroke="rgba(255,255,255,0.3)"
-    tick={{
-      fill: 'rgba(255,255,255,0.5)',
-      fontSize: 12,
-    }}
-  />
-
-  <Tooltip />
-
-  <Bar
-    dataKey="count"
-    fill="#60a5fa"
-    radius={[10, 10, 0, 0]}
-  />
-
-</BarChart>
-
-            </ResponsiveContainer>
-
-          </div>
-
-        </div>
-
-        <br />
-        <br />
+      <div className="container">
 
         <div
   className="card"
   style={{
-    minHeight: '160px',
-  }}
->
-
-<h2>
-  Recent Activity
-</h2>
-
-<br />
-
-{
-  dueMeters.length === 0
-  ? (
-      <div>
-        No upcoming provings
-      </div>
-    )
-  : (
-      dueMeters.map(meter => (
-
-        <div
-          key={meter.id}
-          style={{
-            padding: '12px',
-            borderBottom:
-              '1px solid #e5e7eb',
-          }}
-        >
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-
-            <div>
-
-              <div
-                style={{
-                  fontWeight: '700',
-                }}
-              >
-                {meter.meter_id_tag}
-              </div>
-
-              <div
-                style={{
-                  color: '#64748b',
-                }}
-              >
-                {meter.location}
-              </div>
-
-            </div>
-
-            <div
-  style={{
-    textAlign: "right",
-    minWidth: "120px",
-  }}
->
-
-              <div>
-                Due
-              </div>
-
-              <div
-                style={{
-                  color: '#2563eb',
-                }}
-              >
-                {meter.next_due_date}
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      ))
-    )
-}
-
-<br />
-<br />
-
-<div className="card">
-
-  <h2>
-    Active Dispatch Queue
-  </h2>
-
-  <br />
-
-  {
-    meters
-      .slice()
-      .sort((a, b) => {
-
-        const dateA =
-          getNextProveDate(a)
-
-        const dateB =
-          getNextProveDate(b)
-
-        return dateA - dateB
-      })
-      .slice(0, 5)
-      .map(meter => {
-
-        const nextDate =
-          getNextProveDate(meter)
-
-        const priority =
-          getStatus(meter)
-
-        return (
-
-          <Link
-            key={meter.id}
-            href={`/meter-detail?id=${meter.id}`}
-            style={{
-              textDecoration: 'none',
-            }}
-          >
-
-            <div
-  className="dispatch-preview-item"
-  style={{
+    padding: "35px",
+    marginBottom: "35px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "12px 16px",
-    borderBottom: "1px solid #e5e7eb",
+    flexWrap: "wrap",
+    gap: "25px",
   }}
 >
 
   <div>
 
-    <div
+    <h3
       style={{
-        fontWeight: "700",
-        fontSize: "16px",
+        color: "#2563eb",
+        marginBottom: "10px",
       }}
     >
-      {meter.meter_id_tag}
-    </div>
+      👋 {greeting()},
+      {" "}
+      {profile?.full_name?.split(" ")[0]}
+    </h3>
 
-    <div
+    <h1
       style={{
-        color: "#64748b",
-        fontSize: "14px",
+        marginBottom: "8px",
       }}
     >
-      {meter.location}
-    </div>
+      {organization?.name}
+    </h1>
 
-  </div>
-
-  <div>
-
-    <span
+    <p
       style={{
-        background:
-          priority === "DUE"
-            ? "#dc2626"
-            : "#16a34a",
-        color: "white",
-        padding: "6px 12px",
-        borderRadius: "999px",
-        fontSize: "12px",
-        fontWeight: "600",
+        color: "#6b7280",
+        marginBottom: "6px",
       }}
     >
-      {priority}
-    </span>
+      {today}
+    </p>
+
+    <p
+      style={{
+        color: "#6b7280",
+      }}
+    >
+      Welcome back! Here's today's operational summary.
+    </p>
 
   </div>
 
   <div
     style={{
-      textAlign: "right",
+      display: "flex",
+      gap: "15px",
+      flexWrap: "wrap",
     }}
   >
 
-    <div
-  style={{
-    fontWeight: "600",
-    marginBottom: "4px",
-  }}
->
-  Due
-</div>
-
-    <div
-      style={{
-        color: "#2563eb",
-      }}
+    <button
+      className="primary-button"
+      onClick={() =>
+        router.push("/add-meter")
+      }
     >
-      {nextDate.toLocaleDateString()}
-    </div>
+      + Add Meter
+    </button>
+
+    <button
+      onClick={() =>
+        router.push("/schedule")
+      }
+    >
+      📅 Schedule Work
+    </button>
 
   </div>
 
 </div>
 
-          </Link>
-        )
-      })
-  }
+<KPICards
+  meters={meters}
+  technicians={technicians}
+  proveHistory={proveHistory}
+/>
+
+<br />
+
+<CriticalAlerts
+  meters={meters}
+  proveHistory={proveHistory}
+/>
+
+<br />
+
+<h2>
+  📅 Today's Operations
+</h2>
+
+<div
+  className="cards"
+  style={{
+    marginBottom: "35px",
+  }}
+>
+  <UpcomingDueMeters
+    meters={meters}
+  />
+
+  <DispatchQueue
+    meters={meters}
+  />
+</div>
+
+{/* =========================================
+    OPERATIONAL HEALTH
+========================================= */}
+
+<h2
+  style={{
+    marginBottom: "20px",
+    color: "#0f172a",
+  }}
+>
+  📊 Operational Health
+</h2>
+
+<div
+  className="cards"
+  style={{
+    marginBottom: "35px",
+  }}
+>
+  <MeterStatusChart
+    meters={meters}
+  />
+
+  <MeterTypeChart
+    meters={meters}
+  />
+</div>
+
+{/* =========================================
+    RECENT ACTIVITY
+========================================= */}
+
+<RecentActivity
+  proveHistory={proveHistory}
+/>
 
 </div>
 
-        </div>
+</ProtectedRoute>
 
-      </div>
+)
 
-    </ProtectedRoute>
-  )
 }

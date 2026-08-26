@@ -1,119 +1,259 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 import { supabase } from "@/lib/supabase";
 
 export default function EditMeterPage() {
-  const searchParams =
-    useSearchParams();
 
-  const meterId =
-    searchParams.get("id");
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [meter, setMeter] =
-    useState(null);
+  const meterId = searchParams.get("id");
 
-  const [loading, setLoading] =
-    useState(true);
-
-    const handleSave = async () => {
-        console.log(meter)
-  const { error } = await supabase
-    .from("meters")
-    .update({
-      meter_id_tag: meter.meter_id_tag,
-      serial_number: meter.serial_number,
-      location: meter.location,
-      meter_type: meter.meter_type,
-      time_interval_days: meter.time_interval_days,
-    })
-    .eq("id", meter.id)
-
-    console.log(error)
-    
-
-  if (error) {
-    console.log(error)
-    alert("Failed to save changes")
-    return
-  }
-
-  alert("Meter updated successfully")
-}
+  const [meter, setMeter] = useState(null);
+const [loading, setLoading] = useState(true);
+const [saving, setSaving] = useState(false);
+const [technicians, setTechnicians] = useState([]);
 
   useEffect(() => {
+
+    if (!meterId) {
+      setLoading(false);
+      return;
+    }
+
     fetchMeter();
-  }, []);
+fetchTechnicians();
+
+  }, [meterId]);
 
   async function fetchMeter() {
-   const { data, error } = await supabase
-  .from("meters")
-  .select("*")
-  .eq("meter_id_tag", meterId)
-  .maybeSingle()
 
-console.log(data)
-console.log(error)
+    setLoading(true);
 
-if (data) {
-  setMeter(data)
-}
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("meters")
+      .select("*")
+      .eq(
+        "meter_id_tag",
+        meterId
+      )
+      .maybeSingle();
+
+    console.log("Meter:", data);
+    console.log("Meter Error:", error);
+
+    if (error) {
+
+      console.error(error);
+
+      toast.error(
+        "Unable to load meter."
+      );
+
+      setLoading(false);
+
+      return;
+    }
+
+    if (!data) {
+
+      toast.error(
+        "Meter not found."
+      );
+
+      setLoading(false);
+
+      return;
+    }
+
+    setMeter(data);
 
     setLoading(false);
   }
 
-  async function saveMeter() {
-    const { error } =
-      await supabase
-        .from("meters")
-        .update({
-          meter_id_tag:
-            meter.meter_id_tag,
+  async function fetchTechnicians() {
 
-          serial_number:
-            meter.serial_number,
+  const {
+    data: {
+      user,
+    },
+  } = await supabase.auth.getUser();
 
-          location:
-            meter.location,
+  if (!user) {
+    return;
+  }
 
-          meter_type:
-            meter.meter_type,
+  const {
+    data: profile,
+    error: profileError,
+  } = await supabase
+    .from("Profiles")
+    .select("organization_id")
+    .eq(
+      "user_id",
+      user.id
+    )
+    .maybeSingle();
 
-          time_interval_days:
-            meter.time_interval_days,
-        })
-        .eq("meter_id_tag", meterId)
+  if (profileError || !profile) {
+    console.error(
+      "PROFILE ERROR:",
+      profileError
+    );
+    return;
+  }
 
-    if (!error) {
-      alert("Meter updated!");
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("Technicians")
+    .select("id, name")
+    .eq(
+      "organization_id",
+      profile.organization_id
+    )
+    .order("name", {
+      ascending: true,
+    });
+
+  if (error) {
+    console.error(
+      "TECHNICIAN ERROR:",
+      error
+    );
+    return;
+  }
+
+  setTechnicians(
+    data || []
+  );
+}
+
+  async function handleSave() {
+
+    if (!meter) return;
+
+    if (saving) return;
+
+    setSaving(true);
+
+    const {
+      error,
+    } = await supabase
+      .from("meters")
+      .update({
+
+        meter_id_tag:
+          meter.meter_id_tag,
+
+        serial_number:
+          meter.serial_number,
+
+        location:
+          meter.location,
+
+        meter_type:
+          meter.meter_type,
+
+        time_interval_days:
+  Number(
+    meter.time_interval_days
+  ),
+
+technician_id:
+  meter.technician_id || null,
+
+      })
+      .eq(
+        "id",
+        meter.id
+      );
+
+    console.log(
+      "Update Error:",
+      error
+    );
+
+    if (error) {
+
+      console.error(error);
+
+      toast.error(
+        "Failed to save changes."
+      );
+
+      setSaving(false);
+
+      return;
     }
+
+    toast.success(
+      "Meter updated successfully!"
+    );
+
+    router.push("/meters");
+
   }
 
   if (loading) {
-    return <p>Loading...</p>;
+
+    return (
+
+      <div className="page-container">
+
+        <p>
+          Loading...
+        </p>
+
+      </div>
+
+    );
+
   }
 
   if (!meter) {
-  return <p>Meter not found</p>;
-}
+
+    return (
+
+      <div className="page-container">
+
+        <h1>
+          Meter Not Found
+        </h1>
+
+      </div>
+
+    );
+
+  }
 
   return (
+
     <div className="page-container">
+
       <h1 className="page-title">
         Edit Meter
       </h1>
 
       <div className="card">
+
         <div className="form-grid">
+
           <div className="form-group">
+
             <label>
               Meter ID
             </label>
 
-            "Meters"
+            <input
               value={
                 meter.meter_id_tag || ""
               }
@@ -125,17 +265,18 @@ if (data) {
                 })
               }
             />
+
           </div>
 
           <div className="form-group">
+
             <label>
               Serial Number
             </label>
 
-            "Meters"
+            <input
               value={
-                meter.serial_number ||
-                ""
+                meter.serial_number || ""
               }
               onChange={(e) =>
                 setMeter({
@@ -145,14 +286,16 @@ if (data) {
                 })
               }
             />
+
           </div>
 
           <div className="form-group">
+
             <label>
               Location
             </label>
 
-            "Meters"
+            <input
               value={
                 meter.location || ""
               }
@@ -164,17 +307,18 @@ if (data) {
                 })
               }
             />
+
           </div>
 
           <div className="form-group">
+
             <label>
               Meter Type
             </label>
 
             <select
               value={
-                meter.meter_type ||
-                ""
+                meter.meter_type || ""
               }
               onChange={(e) =>
                 setMeter({
@@ -184,30 +328,75 @@ if (data) {
                 })
               }
             >
-              <option>
+
+              <option value="">
+                Select Meter Type
+              </option>
+
+              <option value="Coriolis">
                 Coriolis
               </option>
 
-              <option>
+              <option value="Turbine">
                 Turbine
               </option>
 
-              <option>
+              <option value="Positive Displacement">
                 Positive Displacement
               </option>
+
             </select>
+
           </div>
 
           <div className="form-group">
+
+  <label>
+    Technician
+  </label>
+
+  <select
+    value={
+      meter.technician_id || ""
+    }
+    onChange={(e) =>
+      setMeter({
+        ...meter,
+        technician_id:
+          e.target.value || null,
+      })
+    }
+  >
+
+    <option value="">
+      Unassigned
+    </option>
+
+    {technicians.map((technician) => (
+
+      <option
+        key={technician.id}
+        value={technician.id}
+      >
+        {technician.name}
+      </option>
+
+    ))}
+
+  </select>
+
+</div>
+
+          <div className="form-group">
+
             <label>
               Time Interval Days
             </label>
 
-            "Meters"
+            <input
               type="number"
               value={
-                meter.time_interval_days ||
-                ""
+                meter.time_interval_days ?? ""
               }
               onChange={(e) =>
                 setMeter({
@@ -217,14 +406,29 @@ if (data) {
                 })
               }
             />
+
           </div>
+
         </div>
 
-       <button onClick={handleSave}>
-  Save Changes
-</button>
-        
+        <br />
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+        >
+
+          {saving
+            ? "Saving..."
+            : "Save Changes"}
+
+        </button>
+
       </div>
+
     </div>
+
   );
+
 }

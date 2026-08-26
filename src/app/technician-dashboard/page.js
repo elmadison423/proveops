@@ -66,7 +66,7 @@ export default function TechnicianDashboard() {
     const {
       data: meterData,
     } = await supabase
-      .from('Meters')
+      .from('meters')
       .select('*')
       .eq(
         'organization_id',
@@ -159,15 +159,11 @@ export default function TechnicianDashboard() {
           Technician Dashboard
         </h1>
 
-        "Meters"
-          placeholder="Search technicians..."
-          value={search}
-          onChange={(e) =>
-            setSearch(
-              e.target.value
-            )
-          }
-        />
+        <input
+  placeholder="Search technicians..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+/>
 
         <br />
         <br />

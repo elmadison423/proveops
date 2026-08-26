@@ -13,6 +13,8 @@ from '../../components/ProtectedRoute'
 
 import { useRouter } from 'next/navigation'
 
+import toast from 'react-hot-toast'
+
 export default function DispatchBoard() {
 
   const router = useRouter()
@@ -34,6 +36,20 @@ const [sortBy, setSortBy] =
     setTechnicians,
   ] = useState([])
 
+  const [selectedMeter, setSelectedMeter] = useState(null)
+
+const [showScheduleModal, setShowScheduleModal] =
+  useState(false)
+
+const [scheduleDate, setScheduleDate] =
+  useState('')
+
+const [scheduleTime, setScheduleTime] =
+  useState('')
+
+const [scheduleNotes, setScheduleNotes] =
+  useState('')
+
   useEffect(() => {
 
     fetchData()
@@ -42,49 +58,231 @@ const [sortBy, setSortBy] =
 
   async function fetchData() {
 
-    const user =
-      (
-        await supabase.auth
-          .getUser()
-      ).data.user
+  console.log("========== DISPATCH BOARD ==========")
 
-    if (!user) return
+  const {
+    data: {
+      user
+    },
+    error: userError
+  } = await supabase.auth.getUser()
 
-    const {
-      data: profile,
-    } = await supabase
-      .from('Profiles')
-      .select('*')
-      .eq(
-        'user_id',
-        user.id
-      )
-      .single()
+  console.log("USER:", user)
+  console.log("USER ERROR:", userError)
 
-    const {
-      data: meterData,
-    } = await supabase
-      .from('Meters')
-      .select('*')
-      .eq(
-        'organization_id',
-        profile.organization_id
-      )
-
-    const {
-      data: techData,
-    } = await supabase
-      .from('Technicians')
-      .select('*')
-
-    setMeters(
-      meterData || []
-    )
-
-    setTechnicians(
-      techData || []
-    )
+  if (!user) {
+    console.error("NO LOGGED-IN USER")
+    return
   }
+
+  const {
+    data: profile,
+    error: profileError
+  } = await supabase
+    .from('Profiles')
+    .select('*')
+    .eq(
+      'user_id',
+      user.id
+    )
+    .single()
+
+  console.log("PROFILE:", profile)
+  console.log("PROFILE ERROR:", profileError)
+
+  if (profileError || !profile) {
+    console.error(
+      "COULD NOT LOAD PROFILE"
+    )
+    return
+  }
+
+  console.log(
+    "ORGANIZATION ID:",
+    profile.organization_id
+  )
+
+  const {
+    data: meterData,
+    error: meterError
+  } = await supabase
+    .from('meters')
+    .select('*')
+    .eq(
+      'organization_id',
+      profile.organization_id
+    )
+
+  console.log("METERS:", meterData)
+  console.log("METER ERROR:", meterError)
+
+  const {
+    data: techData,
+    error: techError
+  } = await supabase
+    .from('Technicians')
+    .select('*')
+
+  console.log("TECHNICIANS:", techData)
+  console.log("TECHNICIAN ERROR:", techError)
+
+  setMeters(
+    meterData || []
+  )
+
+  setTechnicians(
+    techData || []
+  )
+
+  console.log(
+    "DISPATCH BOARD METERS:",
+    meterData?.length || 0
+  )
+
+  console.log(
+    "===================================="
+  )
+}
+
+ async function scheduleMeter() {
+
+  if (!selectedMeter) {
+    toast.error("No meter selected.")
+    return
+  }
+
+  if (!scheduleDate) {
+    toast.error("Please select a scheduled date.")
+    return
+  }
+
+  if (!scheduleTime) {
+    toast.error("Please select a scheduled time.")
+    return
+  }
+
+  const user =
+    (
+      await supabase.auth.getUser()
+    ).data.user
+
+  if (!user) {
+    toast.error("No logged-in user found.")
+    return
+  }
+
+  const {
+    data: profile,
+    error: profileError
+  } = await supabase
+    .from('Profiles')
+    .select('organization_id')
+    .eq(
+      'user_id',
+      user.id
+    )
+    .single()
+
+  if (profileError || !profile) {
+    console.error(
+      "PROFILE ERROR:",
+      profileError
+    )
+
+    toast.error("Unable to find your organization.")
+    return
+  }
+
+  const {
+    data: existingSchedule,
+    error: existingError
+  } = await supabase
+    .from('Schedules')
+    .select('id')
+    .eq(
+      'meter_id',
+      selectedMeter.id
+    )
+    .eq(
+      'status',
+      'Scheduled'
+    )
+    .maybeSingle()
+
+  if (existingError) {
+    console.error(
+      "SCHEDULE CHECK ERROR:",
+      existingError
+    )
+
+    toast.error("Unable to check existing schedules.")
+    return
+  }
+
+  if (existingSchedule) {
+    toast.error(
+  "This meter is already scheduled."
+)
+
+    return
+  }
+
+  const {
+    error: scheduleError
+  } = await supabase
+    .from('Schedules')
+    .insert({
+      organization_id:
+        profile.organization_id,
+
+      meter_id:
+        selectedMeter.id,
+
+      technician_id:
+        selectedMeter.technician_id || null,
+
+      scheduled_date:
+        scheduleDate,
+
+      scheduled_time:
+        scheduleTime,
+
+      status:
+        'Scheduled',
+
+      notes:
+        scheduleNotes || null
+    })
+
+  if (scheduleError) {
+
+    console.error(
+      "SCHEDULE ERROR:",
+      scheduleError
+    )
+
+    toast.error(
+  "Unable to schedule meter."
+)
+
+    return
+  }
+
+  toast.success(
+  "Meter scheduled successfully!"
+)
+
+  setShowScheduleModal(false)
+
+  setSelectedMeter(null)
+
+  setScheduleDate('')
+
+  setScheduleTime('')
+
+  setScheduleNotes('')
+
+}
 
   function getNextProveDate(
     meter
@@ -263,25 +461,17 @@ nextWeek.setDate(
 
         <div className="dispatch-toolbar">
 
-  "Meters"
+  <input
     type="text"
     placeholder="Search meters..."
     value={search}
-    onChange={e =>
-      setSearch(
-        e.target.value
-      )
-    }
+   onChange={(e) => setSearch(e.target.value)}
     className="dispatch-search"
   />
 
   <select
     value={sortBy}
-    onChange={e =>
-      setSortBy(
-        e.target.value
-      )
-    }
+   onChange={(e) => setSortBy(e.target.value)}
     className="dispatch-sort"
   >
 
@@ -394,10 +584,35 @@ nextWeek.setDate(
               Due Date:
               {' '}
               {
-                getNextProveDate(meter)
-                .toLocaleDateString()
-              }
+  meter.next_due_date
+    ? new Date(
+        meter.next_due_date + "T00:00:00"
+      ).toLocaleDateString()
+    : getNextProveDate(meter)
+        .toLocaleDateString()
+}
             </p>
+
+            <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation();
+
+    setSelectedMeter(meter);
+
+    setScheduleDate(
+      meter.next_due_date || ''
+    );
+
+    setScheduleTime('');
+
+    setScheduleNotes('');
+
+    setShowScheduleModal(true);
+  }}
+>
+  📅 Schedule Job
+</button>
 
           </div>
         )
@@ -407,7 +622,210 @@ nextWeek.setDate(
 
 </div>
 
+       </div>
+
+      {showScheduleModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "12px",
+              padding: "24px",
+              width: "min(500px, 90%)",
+              boxShadow:
+                "0 20px 50px rgba(0,0,0,0.25)",
+            }}
+          >
+
+            <h2>
+              Schedule Meter
+            </h2>
+
+            <p
+              style={{
+                marginTop: "8px",
+                marginBottom: "20px",
+              }}
+            >
+              {selectedMeter?.meter_id_tag}
+              {" — "}
+              {selectedMeter?.name}
+            </p>
+
+            <div
+              style={{
+                marginBottom: "16px",
+              }}
+            >
+
+              <label>
+                Technician
+              </label>
+
+              <select
+                value={
+                  selectedMeter?.technician_id || ""
+                }
+                onChange={(e) =>
+                  setSelectedMeter({
+                    ...selectedMeter,
+                    technician_id:
+                      e.target.value
+                        ? Number(e.target.value)
+                        : null,
+                  })
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "6px",
+                  padding: "10px",
+                }}
+              >
+
+                <option value="">
+                  Select Technician
+                </option>
+
+                {technicians.map(
+                  technician => (
+                    <option
+                      key={technician.id}
+                      value={technician.id}
+                    >
+                      {technician.name}
+                    </option>
+                  )
+                )}
+
+              </select>
+
+            </div>
+
+            <div
+              style={{
+                marginBottom: "16px",
+              }}
+            >
+
+              <label>
+                Scheduled Date
+              </label>
+
+              <input
+                type="date"
+                value={scheduleDate}
+                onChange={(e) =>
+                  setScheduleDate(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "6px",
+                  padding: "10px",
+                }}
+              />
+
+            </div>
+
+            <div
+              style={{
+                marginBottom: "16px",
+              }}
+            >
+
+              <label>
+                Scheduled Time
+              </label>
+
+              <input
+                type="time"
+                value={scheduleTime}
+                onChange={(e) =>
+                  setScheduleTime(
+                    e.target.value
+                  )
+                }
+                style={{
+                  width: "100%",
+                  marginTop: "6px",
+                  padding: "10px",
+                }}
+              />
+
+            </div>
+
+            <div
+              style={{
+                marginBottom: "20px",
+              }}
+            >
+
+              <label>
+                Notes
+              </label>
+
+              <textarea
+                value={scheduleNotes}
+                onChange={(e) =>
+                  setScheduleNotes(
+                    e.target.value
+                  )
+                }
+                placeholder="Optional notes..."
+                rows={4}
+                style={{
+                  width: "100%",
+                  marginTop: "6px",
+                  padding: "10px",
+                  resize: "vertical",
+                }}
+              />
+
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "12px",
+              }}
+            >
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowScheduleModal(false);
+                  setSelectedMeter(null);
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={scheduleMeter}
+              >
+                Schedule Job
+              </button>
+
+            </div>
+
+          </div>
+
         </div>
+      )}
 
     </ProtectedRoute>
   )
