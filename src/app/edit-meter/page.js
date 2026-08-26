@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import { supabase } from "@/lib/supabase";
 
-export default function EditMeterPage() {
+function EditMeterContent() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -429,6 +429,22 @@ technician_id:
 
     </div>
 
+    );
+
+}
+
+export default function EditMeterPage() {
+
+  return (
+    <Suspense
+      fallback={
+        <div className="page-container">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <EditMeterContent />
+    </Suspense>
   );
 
 }

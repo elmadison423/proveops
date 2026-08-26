@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Suspense,
   useEffect,
   useState,
 } from "react";
@@ -14,7 +15,7 @@ import { supabase } from "@/lib/supabase";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function MeterDetail() {
+function MeterDetailContent() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -228,7 +229,6 @@ export default function MeterDetail() {
 
         </div>
 
-
         {/* METER INFORMATION */}
 
         <div
@@ -379,7 +379,6 @@ export default function MeterDetail() {
 
         </div>
 
-
         {/* PROVE HISTORY */}
 
         <div className="card">
@@ -446,4 +445,41 @@ export default function MeterDetail() {
     </ProtectedRoute>
 
   );
+}
+
+
+/*
+  Next.js requires useSearchParams()
+  to be inside a Suspense boundary
+  during production builds.
+*/
+
+export default function MeterDetail() {
+
+  return (
+
+    <Suspense
+      fallback={
+
+        <ProtectedRoute>
+
+          <div className="page-container">
+
+            <p>
+              Loading meter...
+            </p>
+
+          </div>
+
+        </ProtectedRoute>
+
+      }
+    >
+
+      <MeterDetailContent />
+
+    </Suspense>
+
+  );
+
 }

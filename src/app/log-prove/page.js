@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import {
   useSearchParams,
@@ -14,7 +14,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import toast from "react-hot-toast";
 
 
-export default function LogProve() {
+function LogProveContent() {
 
   const router = useRouter();
 
@@ -931,6 +931,22 @@ if (
 
     </ProtectedRoute>
 
+   );
+
+}
+
+export default function LogProve() {
+
+  return (
+    <Suspense
+      fallback={
+        <div className="container">
+          <p>Loading...</p>
+        </div>
+      }
+    >
+      <LogProveContent />
+    </Suspense>
   );
 
 }
