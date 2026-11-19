@@ -195,16 +195,15 @@ export default function ActionsMenu({
           />
 
           <button
-            type="button"
-            className="menu-item danger"
-            onClick={() => {
-              closeMenu();
-              onDelete();
-            }}
-          >
-            🗑 Delete Meter
-          </button>
-
+  type="button"
+  className="menu-item danger"
+  onClick={() => {
+    closeMenu();
+    onDelete();
+  }}
+>
+  📦 Archive Meter
+</button>
         </div>,
         document.body
       )

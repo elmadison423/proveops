@@ -1,6 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   useSearchParams,
@@ -12,7 +16,6 @@ import { supabase } from "@/lib/supabase";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 import toast from "react-hot-toast";
-
 
 function LogProveContent() {
 
@@ -27,6 +30,10 @@ function LogProveContent() {
   const meterId =
     searchParams.get("id");
 
+
+  /* =========================
+     PROVE FORM STATE
+  ========================= */
 
   const [meterFactor, setMeterFactor] =
     useState("");
@@ -55,9 +62,124 @@ function LogProveContent() {
   const [status, setStatus] =
     useState("PASS");
 
+
+  /* =========================
+     TECHNICIANS
+  ========================= */
+
+  const [technicians, setTechnicians] =
+    useState([]);
+
+  const [selectedTechnicianId, setSelectedTechnicianId] =
+    useState("");
+
+
+  /* =========================
+     REPORT UPLOAD
+  ========================= */
+
+  const [reportFile, setReportFile] =
+    useState(null);
+
+
+  /* =========================
+     SAVING
+  ========================= */
+
   const [saving, setSaving] =
     useState(false);
 
+
+  /* =========================
+     LOAD TECHNICIANS
+  ========================= */
+
+  useEffect(() => {
+
+    loadTechnicians();
+
+  }, []);
+
+
+  async function loadTechnicians() {
+
+    const {
+      data: {
+        user,
+      },
+    } = await supabase.auth.getUser();
+
+
+    if (!user) {
+      return;
+    }
+
+
+    const {
+      data: profile,
+      error: profileError,
+    } = await supabase
+      .from("Profiles")
+      .select("organization_id")
+      .eq(
+        "user_id",
+        user.id
+      )
+      .single();
+
+
+    if (
+      profileError ||
+      !profile
+    ) {
+
+      console.error(
+        "TECHNICIAN PROFILE ERROR:",
+        profileError
+      );
+
+      return;
+    }
+
+
+    const {
+      data: technicianData,
+      error: technicianError,
+    } = await supabase
+      .from("Technicians")
+      .select("id, name")
+      .eq(
+        "organization_id",
+        profile.organization_id
+      )
+      .order(
+        "name",
+        {
+          ascending: true,
+        }
+      );
+
+
+    if (technicianError) {
+
+      console.error(
+        "TECHNICIAN LOAD ERROR:",
+        technicianError
+      );
+
+      return;
+    }
+
+
+    setTechnicians(
+      technicianData || []
+    );
+  }
+
+
+  /* =========================
+     ENTER KEY NAVIGATION
+  ========================= */
 
   function handleEnterKey(e) {
 
@@ -67,7 +189,8 @@ function LogProveContent() {
 
     e.preventDefault();
 
-    const form = e.target.form;
+    const form =
+      e.target.form;
 
     if (!form) {
       return;
@@ -85,6 +208,76 @@ function LogProveContent() {
   }
 
 
+  /* =========================
+     REPORT FILE SELECTION
+  ========================= */
+
+  function handleReportChange(e) {
+
+    const file =
+      e.target.files?.[0];
+
+    if (!file) {
+
+      setReportFile(null);
+
+      return;
+    }
+
+
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+    ];
+
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+
+      toast.error(
+        "Please upload a PDF, JPG, or PNG file."
+      );
+
+      e.target.value = "";
+
+      setReportFile(null);
+
+      return;
+    }
+
+
+    const maxSize =
+      50 * 1024 * 1024;
+
+
+    if (
+      file.size > maxSize
+    ) {
+
+      toast.error(
+        "The proving report must be 50 MB or smaller."
+      );
+
+      e.target.value = "";
+
+      setReportFile(null);
+
+      return;
+    }
+
+
+    setReportFile(file);
+  }
+
+
+  /* =========================
+     SAVE PROVE
+  ========================= */
+
   async function saveProve() {
 
     if (saving) {
@@ -97,44 +290,71 @@ function LogProveContent() {
     ========================= */
 
     if (!meterFactor.trim()) {
+
       toast.error(
         "Meter Factor is required."
       );
+
       return;
     }
 
+
     if (!proverVolume.trim()) {
+
       toast.error(
         "Prover Volume is required."
       );
+
       return;
     }
 
+
     if (!flowRate.trim()) {
+
       toast.error(
         "Flow Rate is required."
       );
+
       return;
     }
 
+
     if (!totalizer.trim()) {
+
       toast.error(
         "Totalizer is required."
       );
+
       return;
     }
 
+
     if (!meterTemp.trim()) {
+
       toast.error(
         "Meter Temperature is required."
       );
+
       return;
     }
 
+
     if (!certifiedTemp.trim()) {
+
       toast.error(
         "Certified Temperature is required."
       );
+
+      return;
+    }
+
+
+    if (!selectedTechnicianId) {
+
+      toast.error(
+        "Technician is required."
+      );
+
       return;
     }
 
@@ -253,51 +473,6 @@ function LogProveContent() {
 
 
       /* =========================
-         GET TECHNICIAN
-      ========================= */
-
-      let technicianId =
-        meter.technician_id || null;
-
-
-      if (scheduleId) {
-
-        const {
-          data: schedule,
-          error: scheduleError,
-        } = await supabase
-          .from("Schedules")
-          .select(
-            "id, technician_id, meter_id"
-          )
-          .eq(
-            "id",
-            scheduleId
-          )
-          .maybeSingle();
-
-
-        if (scheduleError) {
-
-          console.error(
-            "SCHEDULE ERROR:",
-            scheduleError
-          );
-
-        }
-
-
-        if (schedule?.technician_id) {
-
-          technicianId =
-            schedule.technician_id;
-
-        }
-
-      }
-
-
-      /* =========================
          TODAY
       ========================= */
 
@@ -308,10 +483,28 @@ function LogProveContent() {
 
 
       /* =========================
+         GET TECHNICIAN NAME
+      ========================= */
+
+      const selectedTechnician =
+        technicians.find(
+          (technician) =>
+            String(technician.id) ===
+            String(selectedTechnicianId)
+        );
+
+
+      const technicianName =
+        selectedTechnician?.name ||
+        null;
+
+
+      /* =========================
          SAVE PROVE HISTORY
       ========================= */
 
       const {
+        data: historyRecord,
         error: historyError,
       } = await supabase
         .from("ProveHistory")
@@ -328,7 +521,10 @@ function LogProveContent() {
               meter.location,
 
             technician_id:
-              technicianId,
+              selectedTechnicianId,
+
+            technician:
+              technicianName,
 
             prove_date:
               today,
@@ -361,7 +557,9 @@ function LogProveContent() {
               profile.organization_id,
 
           },
-        ]);
+        ])
+        .select("id")
+        .single();
 
 
       if (historyError) {
@@ -382,6 +580,110 @@ function LogProveContent() {
 
 
       /* =========================
+         UPLOAD PROVING REPORT
+      ========================= */
+
+      let reportUploadFailed =
+        false;
+
+
+      if (reportFile) {
+
+        try {
+
+          const safeFileName =
+            reportFile.name
+              .replace(
+                /[^a-zA-Z0-9._-]/g,
+                "_"
+              );
+
+
+          const filePath =
+            `${profile.organization_id}/${meter.id}/${historyRecord.id}/${safeFileName}`;
+
+
+          const {
+            error: uploadError,
+          } = await supabase.storage
+            .from("proving-reports")
+            .upload(
+              filePath,
+              reportFile,
+              {
+                cacheControl:
+                  "3600",
+
+                upsert:
+                  false,
+
+                contentType:
+                  reportFile.type,
+              }
+            );
+
+
+          if (uploadError) {
+
+            console.error(
+              "REPORT UPLOAD ERROR:",
+              uploadError
+            );
+
+            reportUploadFailed =
+              true;
+
+          } else {
+
+            /* =========================
+               SAVE FILE PATH
+            ========================= */
+
+            const {
+              error:
+                reportPathError,
+            } = await supabase
+              .from("ProveHistory")
+              .update({
+                report_file_path:
+                  filePath,
+              })
+              .eq(
+                "id",
+                historyRecord.id
+              );
+
+
+            if (
+              reportPathError
+            ) {
+
+              console.error(
+                "REPORT PATH ERROR:",
+                reportPathError
+              );
+
+              reportUploadFailed =
+                true;
+
+            }
+
+          }
+
+        } catch (uploadException) {
+
+          console.error(
+            "REPORT UPLOAD EXCEPTION:",
+            uploadException
+          );
+
+          reportUploadFailed =
+            true;
+        }
+      }
+
+
+      /* =========================
          PASS
       ========================= */
 
@@ -396,7 +698,8 @@ function LogProveContent() {
         nextDueDate.setDate(
           nextDueDate.getDate() +
           Number(
-            meter.time_interval_days || 30
+            meter.time_interval_days ||
+            30
           )
         );
 
@@ -410,8 +713,10 @@ function LogProveContent() {
 
 
         if (
-          meter.volume_interval !== null &&
-          meter.volume_interval !== undefined &&
+          meter.volume_interval !==
+            null &&
+          meter.volume_interval !==
+            undefined &&
           totalizer !== ""
         ) {
 
@@ -420,7 +725,6 @@ function LogProveContent() {
             Number(
               meter.volume_interval
             );
-
         }
 
 
@@ -429,7 +733,8 @@ function LogProveContent() {
         ========================= */
 
         const {
-          error: meterUpdateError,
+          error:
+            meterUpdateError,
         } = await supabase
           .from("meters")
           .update({
@@ -495,7 +800,7 @@ function LogProveContent() {
             meterUpdateError?.hint
           );
 
-          console.log(
+          console.error(
             "========================================"
           );
 
@@ -533,7 +838,8 @@ function LogProveContent() {
 
 
         const {
-          error: failUpdateError,
+          error:
+            failUpdateError,
         } = await supabase
           .from("meters")
           .update({
@@ -582,7 +888,7 @@ function LogProveContent() {
             failUpdateError?.hint
           );
 
-          console.log(
+          console.error(
             "======================================="
           );
 
@@ -599,50 +905,53 @@ function LogProveContent() {
       }
 
 
-   /* =========================
-   COMPLETE SCHEDULE
-========================= */
+      /* =========================
+         COMPLETE SCHEDULE
+      ========================= */
 
-if (
-  scheduleId &&
-  status === "PASS"
-) {
+      if (
+        scheduleId &&
+        status === "PASS"
+      ) {
 
-  const {
-    error: scheduleUpdateError,
-  } = await supabase
-    .from("Schedules")
-    .update({
+        const {
+          error:
+            scheduleUpdateError,
+        } = await supabase
+          .from("Schedules")
+          .update({
 
-      status: "Completed",
+            status:
+              "Completed",
 
-      completed_at:
-        new Date().toISOString(),
+            completed_at:
+              new Date().toISOString(),
 
-    })
-    .eq(
-      "id",
-      scheduleId
-    );
+          })
+          .eq(
+            "id",
+            scheduleId
+          );
 
 
-  if (scheduleUpdateError) {
+        if (
+          scheduleUpdateError
+        ) {
 
-    console.error(
-      "SCHEDULE UPDATE ERROR:",
-      scheduleUpdateError
-    );
+          console.error(
+            "SCHEDULE UPDATE ERROR:",
+            scheduleUpdateError
+          );
 
-    toast.error(
-      "Prove saved, but the schedule could not be completed."
-    );
+          toast.error(
+            "Prove saved, but the schedule could not be completed."
+          );
 
-    setSaving(false);
+          setSaving(false);
 
-    return;
-  }
-
-}
+          return;
+        }
+      }
 
 
       /* =========================
@@ -650,6 +959,14 @@ if (
       ========================= */
 
       if (
+        reportUploadFailed
+      ) {
+
+        toast.error(
+          "Prove saved, but the proving report could not be uploaded."
+        );
+
+      } else if (
         status === "PASS"
       ) {
 
@@ -662,7 +979,6 @@ if (
         toast.error(
           "Prove failed — meter flagged for re-proving."
         );
-
       }
 
 
@@ -687,15 +1003,23 @@ if (
       );
 
       setSaving(false);
-
     }
 
   }
 
 
+  /* =========================
+     PAGE
+  ========================= */
+
   return (
 
-    <ProtectedRoute>
+    <ProtectedRoute
+  allowedRoles={[
+    "Organization Admin",
+    "Technician",
+  ]}
+>
 
       <div className="container">
 
@@ -707,6 +1031,58 @@ if (
         <form>
 
 
+          {/* TECHNICIAN */}
+
+          <div>
+
+            <label>
+              Technician
+            </label>
+
+            <select
+              value={
+                selectedTechnicianId
+              }
+              onChange={(e) =>
+                setSelectedTechnicianId(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            >
+
+              <option value="">
+                Select Technician
+              </option>
+
+              {technicians.map(
+                (technician) => (
+
+                  <option
+                    key={
+                      technician.id
+                    }
+                    value={
+                      technician.id
+                    }
+                  >
+                    {
+                      technician.name
+                    }
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+          </div>
+
+
+          {/* METER FACTOR */}
+
           <div>
 
             <label>
@@ -715,7 +1091,9 @@ if (
 
             <input
               type="number"
-              value={meterFactor}
+              value={
+                meterFactor
+              }
               onChange={(e) =>
                 setMeterFactor(
                   e.target.value
@@ -729,6 +1107,8 @@ if (
           </div>
 
 
+          {/* PROVER VOLUME */}
+
           <div>
 
             <label>
@@ -737,7 +1117,9 @@ if (
 
             <input
               type="number"
-              value={proverVolume}
+              value={
+                proverVolume
+              }
               onChange={(e) =>
                 setProverVolume(
                   e.target.value
@@ -751,6 +1133,8 @@ if (
           </div>
 
 
+          {/* FLOW RATE */}
+
           <div>
 
             <label>
@@ -759,7 +1143,9 @@ if (
 
             <input
               type="number"
-              value={flowRate}
+              value={
+                flowRate
+              }
               onChange={(e) =>
                 setFlowRate(
                   e.target.value
@@ -773,6 +1159,8 @@ if (
           </div>
 
 
+          {/* TOTALIZER */}
+
           <div>
 
             <label>
@@ -781,7 +1169,9 @@ if (
 
             <input
               type="number"
-              value={totalizer}
+              value={
+                totalizer
+              }
               onChange={(e) =>
                 setTotalizer(
                   e.target.value
@@ -795,6 +1185,8 @@ if (
           </div>
 
 
+          {/* METER TEMP */}
+
           <div>
 
             <label>
@@ -803,7 +1195,9 @@ if (
 
             <input
               type="number"
-              value={meterTemp}
+              value={
+                meterTemp
+              }
               onChange={(e) =>
                 setMeterTemp(
                   e.target.value
@@ -817,6 +1211,8 @@ if (
           </div>
 
 
+          {/* CERTIFIED TEMP */}
+
           <div>
 
             <label>
@@ -825,7 +1221,9 @@ if (
 
             <input
               type="number"
-              value={certifiedTemp}
+              value={
+                certifiedTemp
+              }
               onChange={(e) =>
                 setCertifiedTemp(
                   e.target.value
@@ -839,6 +1237,8 @@ if (
           </div>
 
 
+          {/* SEALS */}
+
           <div>
 
             <label>
@@ -846,7 +1246,9 @@ if (
             </label>
 
             <input
-              value={seals}
+              value={
+                seals
+              }
               onChange={(e) =>
                 setSeals(
                   e.target.value
@@ -860,6 +1262,8 @@ if (
           </div>
 
 
+          {/* NOTES */}
+
           <div>
 
             <label>
@@ -867,7 +1271,9 @@ if (
             </label>
 
             <input
-              value={notes}
+              value={
+                notes
+              }
               onChange={(e) =>
                 setNotes(
                   e.target.value
@@ -881,6 +1287,8 @@ if (
           </div>
 
 
+          {/* STATUS */}
+
           <div>
 
             <label>
@@ -888,7 +1296,9 @@ if (
             </label>
 
             <select
-              value={status}
+              value={
+                status
+              }
               onChange={(e) =>
                 setStatus(
                   e.target.value
@@ -912,10 +1322,83 @@ if (
           </div>
 
 
+          {/* =========================
+             PROVING REPORT
+          ========================= */}
+
+          <div
+            style={{
+              marginTop: "20px",
+              padding: "20px",
+              border:
+                "1px solid #cbd5e1",
+              borderRadius: "10px",
+              background:
+                "#f8fafc",
+            }}
+          >
+
+            <label
+              style={{
+                display: "block",
+                fontWeight: "600",
+                marginBottom: "8px",
+              }}
+            >
+              Proving Report
+            </label>
+
+            <p
+              style={{
+                marginTop: "0",
+                marginBottom: "12px",
+                color: "#64748b",
+                fontSize: "14px",
+              }}
+            >
+              Upload the proving report
+              provided by the proving company.
+            </p>
+
+            <input
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              onChange={
+                handleReportChange
+              }
+            />
+
+            {reportFile && (
+
+              <p
+                style={{
+                  marginTop: "10px",
+                  marginBottom: "0",
+                  color: "#334155",
+                  fontSize: "14px",
+                }}
+              >
+                ✓ Selected:{" "}
+                <strong>
+                  {reportFile.name}
+                </strong>
+              </p>
+
+            )}
+
+          </div>
+
+
+          {/* SAVE */}
+
           <button
             type="button"
-            onClick={saveProve}
-            disabled={saving}
+            onClick={
+              saveProve
+            }
+            disabled={
+              saving
+            }
           >
 
             {saving
@@ -931,22 +1414,32 @@ if (
 
     </ProtectedRoute>
 
-   );
-
+  );
 }
+
 
 export default function LogProve() {
 
   return (
+
     <Suspense
       fallback={
+
         <div className="container">
-          <p>Loading...</p>
+
+          <p>
+            Loading...
+          </p>
+
         </div>
+
       }
     >
+
       <LogProveContent />
+
     </Suspense>
+
   );
 
 }

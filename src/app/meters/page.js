@@ -27,11 +27,12 @@ const [showReproveOnly, setShowReproveOnly] =
  async function fetchMeters() {
 
   const { data, error } = await supabase
-    .from("meters")
-    .select("*")
-    .order("last_prove_date", {
-      ascending: true,
-    });
+  .from("meters")
+  .select("*")
+  .eq("is_archived", false)
+  .order("last_prove_date", {
+    ascending: true,
+  });
 
   if (error) {
     console.error(error);
@@ -200,31 +201,48 @@ function toggleAllMeters() {
 }
 
 async function deleteMeter() {
+
   let error = null;
 
   if (bulkDelete) {
-    // Delete all selected meters
+
+    // Archive all selected meters
     const result = await supabase
       .from("meters")
-      .delete()
+      .update({
+        is_archived: true,
+      })
       .in("id", selectedMeters);
 
     error = result.error;
+
   } else {
-    // Delete one meter
+
+    // Archive one meter
     if (!meterToDelete) return;
 
     const result = await supabase
       .from("meters")
-      .delete()
-      .eq("id", meterToDelete.id);
+      .update({
+        is_archived: true,
+      })
+      .eq(
+        "id",
+        meterToDelete.id
+      );
 
     error = result.error;
+
   }
 
   if (error) {
+
     console.error(error);
-    alert("Unable to delete meter.");
+
+    alert(
+      "Unable to archive meter."
+    );
+
     return;
   }
 
@@ -238,6 +256,7 @@ async function deleteMeter() {
 
   // Refresh table
   fetchMeters();
+
 }
 
   const summary = useMemo(() => {
@@ -466,7 +485,7 @@ async function deleteMeter() {
     setShowDeleteModal(true);
   }}
 >
-  Delete Selected
+  Archive Selected
 </button>
     </div>
   </div>
@@ -688,14 +707,18 @@ if (meter.reprove_required === true) {
 
      <DeleteConfirmModal
   open={showDeleteModal}
-  title={bulkDelete ? "Delete Selected Meters" : "Delete Meter"}
-  message={
-    bulkDelete
-      ? `Are you sure you want to delete ${selectedMeters.length} selected meter${selectedMeters.length === 1 ? "" : "s"}? This action cannot be undone.`
-      : meterToDelete
-      ? `Are you sure you want to delete "${meterToDelete.meter_id_tag}"? This action cannot be undone.`
-      : ""
-  }
+  title={
+  bulkDelete
+    ? "Archive Selected Meters"
+    : "Archive Meter"
+}
+ message={
+  bulkDelete
+    ? `Are you sure you want to archive ${selectedMeters.length} selected meter${selectedMeters.length === 1 ? "" : "s"}? The meter history and proving reports will be preserved.`
+    : meterToDelete
+    ? `Are you sure you want to archive "${meterToDelete.meter_id_tag}"? The meter history and proving reports will be preserved.`
+    : ""
+}
   onCancel={() => {
     setShowDeleteModal(false);
     setMeterToDelete(null);

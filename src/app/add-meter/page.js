@@ -359,7 +359,12 @@ export default function AddMeter() {
 
     return (
 
-    <ProtectedRoute>
+    <ProtectedRoute
+  allowedRoles={[
+    "Organization Admin",
+    "Technician",
+  ]}
+>
 
       <div className="container">
 

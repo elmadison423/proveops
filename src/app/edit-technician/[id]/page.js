@@ -41,11 +41,17 @@ export default function EditTechnician() {
   const [role, setRole] =
     useState('')
 
+  const [organizationId, setOrganizationId] =
+    useState(null)
+
+  const [loading, setLoading] =
+    useState(true)
+
   useEffect(() => {
 
     fetchTechnician()
 
-  }, [])
+  }, [technicianId])
 
   function handleEnterKey(
     e
@@ -74,8 +80,63 @@ export default function EditTechnician() {
 
   async function fetchTechnician() {
 
+    setLoading(true)
+
+    const {
+      data: {
+        user,
+      },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+
+      toast.error(
+        'You must be logged in.'
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    const {
+      data: profile,
+      error: profileError,
+    } = await supabase
+      .from('Profiles')
+      .select('organization_id')
+      .eq(
+        'user_id',
+        user.id
+      )
+      .maybeSingle()
+
+    if (
+      profileError ||
+      !profile
+    ) {
+
+      console.error(
+        'PROFILE ERROR:',
+        profileError
+      )
+
+      toast.error(
+        'Unable to load your organization.'
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    setOrganizationId(
+      profile.organization_id
+    )
+
     const {
       data,
+      error,
     } = await supabase
       .from('Technicians')
       .select('*')
@@ -83,59 +144,153 @@ export default function EditTechnician() {
         'id',
         technicianId
       )
-      .single()
+      .eq(
+        'organization_id',
+        profile.organization_id
+      )
+      .maybeSingle()
 
-    if (!data) return
+    if (
+      error
+    ) {
 
-    setName(data.name || '')
+      console.error(
+        'TECHNICIAN ERROR:',
+        error
+      )
 
-    setEmail(data.email || '')
+      toast.error(
+        'Unable to load technician.'
+      )
 
-    setPhone(data.phone || '')
+      setLoading(false)
 
-    setRole(data.role || '')
+      return
+    }
+
+    if (!data) {
+
+      toast.error(
+        'Technician not found.'
+      )
+
+      setLoading(false)
+
+      return
+    }
+
+    setName(
+      data.name || ''
+    )
+
+    setEmail(
+      data.email || ''
+    )
+
+    setPhone(
+      data.phone || ''
+    )
+
+    setRole(
+      data.role || ''
+    )
+
+    setLoading(false)
   }
 
   async function updateTechnician() {
 
-    const { data, error } =
-  await supabase
-    .from('Technicians')
-    .update({
-      name,
-      email,
-      phone,
-      role,
-    })
-    .eq('id', technicianId)
-    .select()
-      
+    if (!organizationId) {
+
+      toast.error(
+        'Unable to verify organization.'
+      )
+
+      return
+    }
+
+    const {
+      error,
+    } = await supabase
+      .from('Technicians')
+      .update({
+        name,
+        email,
+        phone,
+        role,
+      })
+      .eq(
+        'id',
+        technicianId
+      )
+      .eq(
+        'organization_id',
+        organizationId
+      )
 
     if (error) {
 
-      console.log(error)
-
-      toast.error('Error updating technician')
-
-    } else {
-
-   toast.success('Technician updated successfully')   
-
-      router.push(
-        '/technician-dashboard'
+      console.error(
+        'UPDATE TECHNICIAN ERROR:',
+        error
       )
+
+      toast.error(
+        'Error updating technician.'
+      )
+
+      return
     }
+
+    toast.success(
+      'Technician updated successfully'
+    )
+
+    router.push(
+      '/technician-dashboard'
+    )
   }
 
-  return (
+  if (loading) {
 
-    <ProtectedRoute>
+    return (
 
-      <div className="container">
+      <ProtectedRoute
+  allowedRoles={[
+    "Organization Admin",
+  ]}
+>
 
-        <h1>
-          Edit Technician
-        </h1>
+        <div className="container">
+
+          <h1>
+            Edit Technician
+          </h1>
+
+          <p>
+            Loading technician...
+          </p>
+
+        </div>
+
+      </ProtectedRoute>
+
+    )
+  }
+return (
+
+  <ProtectedRoute
+    allowedRoles={[
+      "Organization Admin",
+    ]}
+  >
+
+    <div className="container">
+
+      <h1>
+        Edit Technician
+      </h1>
+
 
         <form>
 
@@ -180,15 +335,25 @@ export default function EditTechnician() {
           </div>
 
           <div>
-  <label>Phone</label>
 
-  <input
-    type="text"
-    value={phone}
-    onChange={(e) => setPhone(e.target.value)}
-    onKeyDown={handleEnterKey}
-  />
-</div>
+            <label>
+              Phone
+            </label>
+
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) =>
+                setPhone(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
+
+          </div>
 
           <div>
 

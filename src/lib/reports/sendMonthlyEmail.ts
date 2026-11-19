@@ -1,43 +1,95 @@
-import { Resend } from "resend"
-import jsPDF from "jspdf"
+import { Resend } from "resend";
+import jsPDF from "jspdf";
 
-const resend = new Resend(
-  process.env.RESEND_API_KEY
-)
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendMonthlyEmail(
   organization: any,
-  pdf: jsPDF
+  pdf: jsPDF,
+  reportMonth: string,
+  recipientOverride?: string
 ) {
-  await resend.emails.send({
-    from: "ProveOps <onboarding@resend.dev>",
+  const recipient =
+  recipientOverride?.trim() ||
+  organization.monthly_report_email?.trim() ||
+  organization.contact_email?.trim();
 
-    to: organization.contact_email,
+  if (!recipient) {
+    throw new Error(
+      `No report recipient configured for ${
+        organization.name || organization.id
+      }`
+    );
+  }
 
-    subject: "Upcoming Meter Proving Schedule",
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured.");
+  }
 
+  if (!/^\d{4}-\d{2}$/.test(reportMonth)) {
+    throw new Error("Invalid report month. Expected YYYY-MM.");
+  }
+
+  const monthLabel = new Date(
+    `${reportMonth}-01T12:00:00Z`
+  ).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+  const safeOrganizationName = String(
+    organization.name || "Organization"
+  ).replace(/[\\/:*?"<>|]/g, "-");
+
+  const { data, error } = await resend.emails.send({
+    from: "ProveOps Reports <reports@proveopssoftware.com>",
+    to: recipient,
+    subject: `${monthLabel} Meter Proving Schedule`,
     html: `
-      <h2>Upcoming Meter Proving Schedule</h2>
+      <h2>${monthLabel} Meter Proving Schedule</h2>
 
-      <p>Hello ${organization.name},</p>
+      <p>Hello ${organization.name || "Customer"},</p>
 
       <p>
-        Attached is your monthly meter proving schedule
-        for all meters due next month.
+        Attached is your meter proving schedule for
+        <strong>${monthLabel}</strong>.
+        It lists active meters with proving due dates during
+        that month.
       </p>
 
       <p>
         Thank you for using ProveOps.
       </p>
     `,
-
     attachments: [
       {
-        filename: `${organization.name}-Meter-Schedule.pdf`,
+        filename: `${safeOrganizationName}-${reportMonth}-Meter-Schedule.pdf`,
         content: Buffer.from(
           pdf.output("arraybuffer")
         ).toString("base64"),
       },
     ],
-  })
+  });
+
+  if (error) {
+    throw new Error(
+      `Resend failed for ${
+        organization.name || organization.id
+      }: ${error.message}`
+    );
+  }
+
+  if (!data?.id) {
+    throw new Error(
+      `Resend did not return an email ID for ${
+        organization.name || organization.id
+      }.`
+    );
+  }
+
+  return {
+    emailId: data.id,
+    recipient,
+  };
 }

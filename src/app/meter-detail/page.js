@@ -379,66 +379,193 @@ function MeterDetailContent() {
 
         </div>
 
-        {/* PROVE HISTORY */}
+    {/* PROVE HISTORY */}
 
-        <div className="card">
+<div className="card">
 
-          <h2>
-            Prove History
-          </h2>
+  <h2>
+    Prove History
+  </h2>
 
-          <br />
+  <br />
 
-          {proveHistory.length === 0 ? (
+  {proveHistory.length === 0 ? (
 
-            <p>
-              No prove history
-            </p>
+    <p>
+      No prove history
+    </p>
 
-          ) : (
+  ) : (
+
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+      }}
+    >
+
+      {proveHistory.map(
+        (prove) => (
+
+          <div
+            key={prove.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "1fr 120px 150px 150px",
+              alignItems: "center",
+              gap: "16px",
+              padding: "12px 16px",
+              border:
+                "1px solid #e2e8f0",
+              borderRadius: "10px",
+              background: "#f8fafc",
+            }}
+          >
+
+            {/* PROVE DATE */}
+
+            <div>
+
+              <strong
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                }}
+              >
+                Prove Date
+              </strong>
+
+              <span>
+                {prove.prove_date ||
+                  prove.date ||
+                  "-"}
+              </span>
+
+            </div>
+
+
+            {/* STATUS */}
+
+            <div>
+
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "6px 12px",
+                  borderRadius: "999px",
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  background:
+                    prove.status === "PASS"
+                      ? "#16a34a"
+                      : "#dc2626",
+                  color: "#ffffff",
+                }}
+              >
+                {prove.status || "-"}
+              </span>
+
+            </div>
+
+
+            {/* VIEW PROVE */}
 
             <div
               style={{
-                display: "grid",
-                gap: "12px",
+                textAlign: "right",
               }}
             >
 
-              {proveHistory.map(
-                (prove) => (
+              <button
+                className="secondary-button"
+                onClick={() =>
+                  router.push(
+                    `/prove-detail?id=${prove.id}`
+                  )
+                }
+              >
+                View Prove →
+              </button>
 
-                  <div
-                    key={prove.id}
-                    style={{
-                      padding: "16px",
-                      border:
-                        "1px solid #e2e8f0",
-                      borderRadius: "10px",
-                    }}
-                  >
+            </div>
 
-                    <p>
 
-                      <strong>
-                        Prove Date:
-                      </strong>{" "}
+            {/* VIEW REPORT */}
 
-                      {prove.prove_date ||
-                        prove.date ||
-                        "-"}
+            <div
+              style={{
+                textAlign: "right",
+              }}
+            >
 
-                    </p>
+              {prove.report_file_path ? (
 
-                  </div>
+                <button
+                  className="secondary-button"
+                  onClick={async () => {
 
-                )
+                    const {
+                      data,
+                      error,
+                    } = await supabase
+                      .storage
+                      .from("proving-reports")
+                      .createSignedUrl(
+                        prove.report_file_path,
+                        60 * 60
+                      );
+
+                    if (error) {
+
+                      console.error(
+                        "REPORT ERROR:",
+                        error
+                      );
+
+                      alert(
+                        "Unable to open proving report."
+                      );
+
+                      return;
+                    }
+
+                    window.open(
+                      data.signedUrl,
+                      "_blank"
+                    );
+
+                  }}
+                >
+                  📄 View Report
+                </button>
+
+              ) : (
+
+                <span
+                  style={{
+                    color: "#94a3b8",
+                    fontSize: "13px",
+                  }}
+                >
+                  No Report
+                </span>
+
               )}
 
             </div>
 
-          )}
+          </div>
 
-        </div>
+        )
+      )}
+
+    </div>
+
+  )}
+
+</div>
 
       </div>
 

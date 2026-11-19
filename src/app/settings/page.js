@@ -39,6 +39,26 @@ export default function SettingsPage() {
   const [theme, setTheme] =
     useState("midnight")
 
+     const [reportEnabled, setReportEnabled] = useState(true)
+
+  const [reportScheduleType, setReportScheduleType] =
+    useState("days_before_month_end")
+
+  const [reportDaysBefore, setReportDaysBefore] =
+    useState(7)
+
+  const [reportDayOfMonth, setReportDayOfMonth] =
+    useState(25)
+
+  const [reportSendTime, setReportSendTime] =
+    useState("08:00")
+
+  const [reportTimezone, setReportTimezone] =
+    useState("America/Chicago")
+
+  const [reportEmail, setReportEmail] =
+    useState("")
+
   // ===========================
   // Load Settings
   // ===========================
@@ -141,6 +161,37 @@ export default function SettingsPage() {
         "midnight"
       )
 
+       setReportEnabled(
+        orgData.monthly_report_enabled ?? true
+      )
+
+      setReportScheduleType(
+        orgData.monthly_report_schedule_type ||
+        "days_before_month_end"
+      )
+
+      setReportDaysBefore(
+        orgData.monthly_report_days_before ?? 7
+      )
+
+      setReportDayOfMonth(
+        orgData.monthly_report_day_of_month ?? 25
+      )
+
+      setReportSendTime(
+        String(orgData.monthly_report_send_time || "08:00:00")
+          .slice(0, 5)
+      )
+
+      setReportTimezone(
+        orgData.monthly_report_timezone ||
+        "America/Chicago"
+      )
+
+      setReportEmail(
+        orgData.monthly_report_email || ""
+      )
+
     }
 
     catch (err) {
@@ -177,16 +228,29 @@ export default function SettingsPage() {
           .from("Organizations")
           .update({
 
-            name,
+  name,
 
-            contact_email: email,
+  contact_email: email,
 
-            phone,
+  phone,
 
-            dispatch_region:
-              dispatchRegion,
+  dispatch_region: dispatchRegion,
 
-          })
+  monthly_report_enabled: reportEnabled,
+
+  monthly_report_schedule_type: reportScheduleType,
+
+  monthly_report_days_before: Number(reportDaysBefore),
+
+  monthly_report_day_of_month: Number(reportDayOfMonth),
+
+  monthly_report_send_time: reportSendTime,
+
+  monthly_report_timezone: reportTimezone,
+
+  monthly_report_email: reportEmail.trim() || null,
+
+})
           .eq(
             "id",
             organization.id
@@ -475,7 +539,7 @@ export default function SettingsPage() {
 
         </div>
 
-        {/* Notifications */}
+        {/* Monthly Report Settings */}
 
         <div
           className="card"
@@ -484,23 +548,128 @@ export default function SettingsPage() {
             marginBottom: "30px",
           }}
         >
+          <h2 style={{ marginTop: 0 }}>
+            📧 Automatic Monthly Reports
+          </h2>
 
-          <h2
+          <p style={{ color: "#6b7280", marginBottom: "25px" }}>
+            Choose when ProveOps emails your organization its upcoming due-meter report.
+          </p>
+
+          <label
             style={{
-              marginTop: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "25px",
             }}
           >
-            🔔 Notifications
-          </h2>
+            <input
+              type="checkbox"
+              checked={reportEnabled}
+              onChange={(e) => setReportEnabled(e.target.checked)}
+              style={{ width: "18px", height: "18px" }}
+            />
+            Enable automatic monthly reports
+          </label>
+
+          <label>Report Schedule</label>
+
+          <select
+            value={reportScheduleType}
+            onChange={(e) => setReportScheduleType(e.target.value)}
+            style={{ marginBottom: "20px" }}
+          >
+            <option value="days_before_month_end">
+              A number of days before the upcoming month
+            </option>
+            <option value="specific_day">
+              A specific day each month
+            </option>
+          </select>
+
+          {reportScheduleType === "days_before_month_end" ? (
+            <>
+              <label>Days Before Upcoming Month</label>
+
+              <select
+                value={reportDaysBefore}
+                onChange={(e) => setReportDaysBefore(Number(e.target.value))}
+                style={{ marginBottom: "20px" }}
+              >
+                <option value={1}>1 day before</option>
+                <option value={3}>3 days before</option>
+                <option value={5}>5 days before</option>
+                <option value={7}>7 days before</option>
+                <option value={10}>10 days before</option>
+                <option value={14}>14 days before</option>
+                <option value={21}>21 days before</option>
+                <option value={28}>28 days before</option>
+              </select>
+            </>
+          ) : (
+            <>
+              <label>Day of Month</label>
+
+              <select
+                value={reportDayOfMonth}
+                onChange={(e) => setReportDayOfMonth(Number(e.target.value))}
+                style={{ marginBottom: "20px" }}
+              >
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          <label>Preferred Delivery Time (Central Time)</label>
+
+          <select
+            value={reportSendTime}
+            onChange={(e) => setReportSendTime(e.target.value)}
+            style={{ marginBottom: "20px" }}
+          >
+            <option value="06:00">6:00 AM</option>
+            <option value="07:00">7:00 AM</option>
+            <option value="08:00">8:00 AM</option>
+            <option value="09:00">9:00 AM</option>
+            <option value="10:00">10:00 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="14:00">2:00 PM</option>
+            <option value="16:00">4:00 PM</option>
+          </select>
+
+          <label>Report Recipient Email (Optional)</label>
+
+          <input
+            type="email"
+            value={reportEmail}
+            onChange={(e) => setReportEmail(e.target.value)}
+            placeholder={email || "Use organization contact email"}
+            style={{ marginBottom: "10px" }}
+          />
 
           <p
             style={{
               color: "#6b7280",
+              fontSize: "13px",
+              marginBottom: "25px",
             }}
           >
-            Monthly due reports, technician alerts, dispatch emails and customer reminders will be configurable here in Version 1.0.
+            Leave blank to send reports to your organization&apos;s contact email.
+            The schedule uses America/Chicago time, including daylight saving time.
           </p>
 
+          <button
+            onClick={saveSettings}
+            className="primary-button"
+            disabled={!organization || !profile}
+          >
+            Save Report Settings
+          </button>
         </div>
 
         {/* Security */}

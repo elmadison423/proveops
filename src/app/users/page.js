@@ -1,13 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { useOrganization } from '../../context/OrganizationContext'
 import { supabase } from '../../lib/supabase'
+import toast from 'react-hot-toast'
 
 export default function UsersPage() {
 
-  const { organization } = useOrganization()
+ const {
+  organization,
+  profile,
+  loading: organizationLoading,
+} = useOrganization()
+
+const router = useRouter()
 
   // ===========================
   // State
@@ -41,6 +49,24 @@ export default function UsersPage() {
 
   }, [organization])
 
+  useEffect(() => {
+
+  if (organizationLoading) return
+
+  if (!profile) return
+
+  if (profile.role !== "Organization Admin") {
+
+    router.replace("/")
+
+  }
+
+}, [
+  profile,
+  organizationLoading,
+  router,
+])
+
   async function loadUsers() {
 
     const { data, error } =
@@ -72,79 +98,122 @@ console.log(data);
   // Invite User
   // ===========================
 
-  async function inviteUser() {
+ async function inviteUser() {
 
-    try {
+  try {
 
-      const response =
-        await fetch(
-          "/api/invite-user",
-          {
+    // ==========================================
+    // GET CURRENT USER SESSION
+    // ==========================================
 
-            method: "POST",
+    const {
+      data: {
+        session,
+      },
+    } = await supabase.auth.getSession();
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
+    if (!session?.access_token) {
 
-            body: JSON.stringify({
-
-              fullName:
-                inviteName,
-
-              email:
-                inviteEmail,
-
-              role:
-                inviteRole,
-
-              organizationId:
-                organization.id,
-
-            }),
-
-          }
-        )
-
-      const result =
-        await response.json()
-
-      if (!response.ok) {
-
-        throw new Error(
-          result.error
-        )
-
-      }
-
-      alert(
-        "User invited successfully!"
-      )
-
-      setShowInviteModal(false)
-
-      setInviteName("")
-      setInviteEmail("")
-      setInviteRole("Technician")
-
-      setTimeout(() => {
-
-  loadUsers();
-
-}, 1000);
+      throw new Error(
+        "You must be logged in to invite a user."
+      );
 
     }
 
-    catch (err) {
 
-      console.error(err)
+    // ==========================================
+    // SEND INVITATION
+    // ==========================================
 
-      alert(err.message)
+    const response =
+      await fetch(
+        "/api/invite-user",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${session.access_token}`,
+          },
+
+          body: JSON.stringify({
+
+            fullName:
+              inviteName,
+
+            email:
+              inviteEmail,
+
+            role:
+              inviteRole,
+
+          }),
+
+        }
+      );
+
+
+    // ==========================================
+    // READ RESPONSE
+    // ==========================================
+
+    const result =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        result.error ||
+        "Unable to invite user."
+      );
 
     }
+
+
+    // ==========================================
+    // SUCCESS
+    // ==========================================
+
+    toast.success(
+      "User invited successfully!"
+    );
+
+    setShowInviteModal(false);
+
+    setInviteName("");
+
+    setInviteEmail("");
+
+    setInviteRole(
+      "Technician"
+    );
+
+
+    setTimeout(() => {
+
+      loadUsers();
+
+    }, 500);
+
+
+  } catch (err) {
+
+    console.error(
+      "INVITE USER ERROR:",
+      err
+    );
+
+    toast.error(
+      err.message ||
+      "Unable to invite user."
+    );
 
   }
+
+}
 
   // ===========================
   // UI

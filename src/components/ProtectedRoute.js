@@ -7,24 +7,59 @@ import { useOrganization } from '../context/OrganizationContext'
 
 export default function ProtectedRoute({
   children,
+  allowedRoles = [],
 }) {
 
   const router = useRouter()
 
   const {
     user,
+    profile,
     loading,
   } = useOrganization()
 
   useEffect(() => {
 
-    if (!loading && !user) {
+    if (loading) {
+      return
+    }
+
+    // Not logged in
+    if (!user) {
 
       router.replace('/login')
 
+      return
     }
 
-  }, [user, loading, router])
+    // No role restriction for this page
+    if (allowedRoles.length === 0) {
+
+      return
+    }
+
+    // User has no profile
+    if (!profile) {
+
+      router.replace('/')
+
+      return
+    }
+
+    // Check role
+    if (!allowedRoles.includes(profile.role)) {
+
+      router.replace('/')
+
+    }
+
+  }, [
+    user,
+    profile,
+    loading,
+    allowedRoles,
+    router,
+  ])
 
   if (loading) {
 
@@ -44,6 +79,17 @@ export default function ProtectedRoute({
   }
 
   if (!user) {
+
+    return null
+  }
+
+  if (
+    allowedRoles.length > 0 &&
+    (
+      !profile ||
+      !allowedRoles.includes(profile.role)
+    )
+  ) {
 
     return null
   }

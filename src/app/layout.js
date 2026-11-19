@@ -21,6 +21,7 @@ import {
 
 import ThemeLoader from "../components/ThemeLoader";
 import AppLayout from "../components/AppLayout";
+import SidebarNav from "../components/SidebarNav";
 
 export const metadata = {
   title: "ProveOps",
@@ -57,108 +58,7 @@ export default function RootLayout({
 
                 </div>
 
-                <div className="sidebar-nav">
-
-                <div className="sidebar-section">
-
-  <p className="sidebar-heading">
-    OVERVIEW
-  </p>
-
-  <Link href="/">
-    <LayoutDashboard size={20} />
-    <span>Dashboard</span>
-  </Link>
-
-</div>
-
-<div className="sidebar-section">
-
-  <p className="sidebar-heading">
-    OPERATIONS
-  </p>
-
-  <Link href="/meters">
-    <Gauge size={20} />
-    <span>Meters</span>
-  </Link>
-
-  <Link href="/history">
-    <History size={20} />
-    <span>History</span>
-  </Link>
-
-  <Link href="/technician-dashboard">
-    <ClipboardList size={20} />
-    <span>Technician Dashboard</span>
-  </Link>
-
-  <Link href="/technician-schedule">
-    <CalendarDays size={20} />
-    <span>Technician Schedule</span>
-  </Link>
-
-  <Link href="/dispatch-calendar">
-    <CalendarDays size={20} />
-    <span>Dispatch Calendar</span>
-  </Link>
-
-  <Link href="/dispatch-board">
-    <ClipboardList size={20} />
-    <span>Dispatch Board</span>
-  </Link>
-
-  <Link href="/meter-map">
-    <Map size={20} />
-    <span>Meter Map</span>
-  </Link>
-
-</div>
-
-<div className="sidebar-section">
-
-  <p className="sidebar-heading">
-    MANAGEMENT
-  </p>
-
-  <Link href="/users">
-  <Users size={20} />
-  <span>Users</span>
-</Link>
-
-  <Link href="/add-meter">
-    <PlusCircle size={20} />
-    <span>Add Meter</span>
-  </Link>
-
-  <Link href="/add-technician">
-    <Users size={20} />
-    <span>Add Technician</span>
-  </Link>
-
-  <Link href="/add-company">
-    <Building2 size={20} />
-    <span>Add Company</span>
-  </Link>
-
-</div>
-
-<div className="sidebar-section">
-
-  <p className="sidebar-heading">
-    SYSTEM
-  </p>
-
-  <Link href="/settings">
-    <Settings size={20} />
-    <span>Settings</span>
-  </Link>
-
-  <LogoutButton />
-
-</div>
-
-    </div>
+              <SidebarNav />
 
               </div>
 

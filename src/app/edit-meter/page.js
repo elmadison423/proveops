@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import { supabase } from "@/lib/supabase";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 function EditMeterContent() {
 
@@ -237,6 +238,13 @@ technician_id:
 
   return (
 
+  <ProtectedRoute
+    allowedRoles={[
+      "Organization Admin",
+      "Technician",
+    ]}
+  >
+
     <div className="page-container">
 
       <h1 className="page-title">
@@ -428,6 +436,8 @@ technician_id:
       </div>
 
     </div>
+
+  </ProtectedRoute>
 
     );
 

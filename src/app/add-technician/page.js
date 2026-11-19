@@ -8,6 +8,8 @@ import {
   useRouter,
 } from 'next/navigation'
 
+import toast from 'react-hot-toast'
+
 import { supabase }
 from '../../lib/supabase'
 
@@ -66,7 +68,7 @@ export default function AddTechnician() {
 
     if (!user) {
 
-      alert(
+      toast.error(
         'No logged in user'
       )
 
@@ -90,7 +92,7 @@ export default function AddTechnician() {
       !profile
     ) {
 
-      alert(
+      toast.error(
         'Profile not found'
       )
 
@@ -118,7 +120,7 @@ export default function AddTechnician() {
 
     if (error) {
 
-      alert(
+      toast.error(
         'Error saving technician'
       )
 
@@ -126,7 +128,7 @@ export default function AddTechnician() {
 
     } else {
 
-      alert(
+      toast.success(
         'Technician added successfully'
       )
 
@@ -136,7 +138,11 @@ export default function AddTechnician() {
 
   return (
 
-    <ProtectedRoute>
+    <ProtectedRoute
+  allowedRoles={[
+    "Organization Admin",
+  ]}
+>
 
       <div className="container">
 
@@ -193,12 +199,16 @@ export default function AddTechnician() {
             </label>
 
             <input
-  value={phone}
-  onChange={(e) =>
-    setPhone(e.target.value)
-  }
-  onKeyDown={handleEnterKey}
-/>
+              value={phone}
+              onChange={(e) =>
+                setPhone(
+                  e.target.value
+                )
+              }
+              onKeyDown={
+                handleEnterKey
+              }
+            />
 
           </div>
 
